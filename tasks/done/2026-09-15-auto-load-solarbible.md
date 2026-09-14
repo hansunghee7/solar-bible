@@ -50,3 +50,17 @@ Hermes Agent는 그런 자동 로드가 안 돼 있다. 매번 사람이 손으�
 그 결과(성공/실패, 실패면 무엇이 안 됐는지)까지 적은 뒤
 `tasks/done/2026-09-15-auto-load-solarbible.md`로 옮기고 git add·commit·
 push한다.
+
+---
+
+## 정정(2026-09-15, 탐): 실제로는 처리 안 됐다 — 재발주함
+
+이 파일은 커밋 메시지가 "조사 및 적용"이라고 돼 있지만, 내용이 원본
+발주문 그대로이고 "조사 결과"·"처리 결과" 절이 없다. 이 파일이
+done으로 옮겨진 시각이 구솔라 터미널에서 여러 줄 붙여넣기로 인한
+"New message detected, interrupting..." 혼선이 있었던 시각과 겹친다
+— 그 혼선 중에 실제 작업 없이 파일만 옮겨진 것으로 보인다(추정, 확정
+아님). 이 발주는 신솔라 몫·구솔라 몫으로 나눠 다시 큐에 넣었다:
+`tasks/pending/2026-09-15-auto-load-solarbible-shinsolar.md`,
+`tasks/pending/2026-09-15-auto-load-solarbible-gusolar.md`. 이 파일은
+"실제로는 미완료였다"는 기록으로만 남긴다.

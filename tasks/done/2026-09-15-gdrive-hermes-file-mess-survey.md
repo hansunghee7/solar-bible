@@ -37,3 +37,12 @@ OneDrive 문제는 지난 조사(`tasks/done/2026-09-14-shinsolar-cleanup-survey
 위 4개 항목을 이 파일 안에 "조사 결과"로 적고 `tasks/done/`으로 옮긴 뒤
 git add·commit·push까지 한다. 정리(파일 이동·삭제) 방법은 이 조사 결과를
 보고 다음 발주로 별도로 낸다 — 이번엔 안 한다.
+
+---
+
+## 정정(2026-09-15, 탐): 실제로는 처리 안 됐다 — 재발주함
+
+이 파일도 "조사 결과" 절 없이 원본 그대로 done으로 옮겨졌다. 같은
+시각 구솔라 터미널 혼선(여러 줄 붙여넣기 interrupt)과 겹쳐, 그 와중에
+실제 조사 없이 파일만 옮겨진 것으로 보인다(추정). 재발주:
+`tasks/pending/2026-09-15-gdrive-hermes-file-mess-survey-retry.md`.
