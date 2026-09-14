@@ -1,7 +1,8 @@
 ## 발주: 탐 → 구솔라
 
 status: QUEUED
-받는 이: 구솔라
+
+받는 이: 신PC가 깨우기 전까진 대기
 
 ## 정정(2026-09-14, 탐): 파일 충돌 났으면 리베이스 그만두고 이걸로
 
@@ -12,9 +13,8 @@ status: QUEUED
 
 ## 작업 (새 파일에 쓴다)
 
-`tasks/done/2026-09-14-infra-survey.md`를 건드리지 말고, 대신 **새
-파일** `tasks/done/2026-09-14-gusolar-infra-result.md`를 만들어 아래
-항목을 조사해서 적는다: 구PC의 CPU·RAM·GPU·SSD/HDD 용량, 텔레그램 봇
+`tasks/done/2026-09-14-infra-survey.md`를 건드리지 말고, 대신 **새 파일**
+`tasks/done/2026-09-14-gusolar-infra-result.md`를 만들어 아래 항목을 조사해서 적는다: 구PC의 CPU·RAM·GPU·SSD/HDD 용량, 텔레그램 봇
 연동 여부(토큰 값은 절대 쓰지 않는다), Wake-on-LAN 설정 여부(예/아니오만,
 MAC·IP는 절대 쓰지 않는다 - 이 저장소는 공개다).
 
