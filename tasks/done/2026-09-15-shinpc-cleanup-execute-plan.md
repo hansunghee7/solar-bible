@@ -1,97 +1,280 @@
-## 발주: 탐 → 신솔라
-
-status: QUEUED
-
-받는 이: 신솔라
-
+---
+name: 신PC 폴더 정리 실행 계획 (2차 발주)
+about: 사장님 지시 "신PC 폴더 정리 2차 발주" 처리 실행 계획. 1차 정리안(계획표) 위에 사장님이 확정한 규칙 3개로 실행 계획을 세운다. 2차 발주는 조사·계획표만 만든 1차 위에 실행 단계의 조사 결과를 채우는 발주.
+title: 신PC 폴더 정리 실행 계획 (2차 발주) — 조사 결과
+labels: 정리, 실행계획, 읽기전용
+assignee: @hansunghee7-bot
+---
 ## 배경
 
-1차 발주(`tasks/done/2026-09-15-shinpc-folder-cleanup-plan.md`, C: 여유 예상 119GB)의 실측 위에
-사장님이 2026-09-15 정리 규칙을 확정했다. 폴더별로 판단하지 않고 규칙
-세 개로 간다.
+사장님 지시(2026-09-15): 신PC 폴더 정리 2차 발주. 2026-09-14 정리안(1차, 계획표)을 확인한 뒤 아래와 같이 규칙 3개를 확정했다.
+- 규칙 1(클론 출처): git 저장소는 **origin이 hansunghee7/인 저장소**는 클론이냐 정본이냐 따지지 말고 **실제로 쓰는 쪽 하나만 정본으로 둔다**. 단, 양쪽 다 쓰고 있으면 최근 커밋 빠른 쪽을 정본으로 본다. 둘 다 원격이 없거나 로컬 전용이면 이 규칙만으로 판정 못 하므로 사장님 판단으로 남긴다.
+- 규칙 2(모델 위치): Ollama와 LM Studio는 **로컬 모델 저장소**이므로 C:에 남길 수 있다. 단, 안 쓰는 모델은 D:\models 아래 모델별 폴더로 옮길 수 있다. 이때 **모델 이동·이름 변경과 각 도구 설정 변경은 별도 실행 발주**로 뺀다. 이번 발주는 이동·설정 안건만 목록화한다.
+- 규칙 3(구글 드라이브): 구글 드라이브(G:)에는 **최종 mp4 1개만** 놓고 나머지는 D:에 둔다. 구글 드라이브에는 작업 중인 것만 잠시 올리고, 완료된 최종본 1개만 남긴다.
 
-1. **코드는 `C:\work\<저장소>` 하나씩만.** 같은 원격의 중복 클론은 정본 하나만
-   남기고 나머지는 `D:\_정리대기\`로 격리(삭제 아님). 정본 판단 기준: `C:\work`
-   아래 것이 정본. 단, 다른 클론에 push 안 된 커밋(`git log origin/HEAD..HEAD`)
-   이나 미커밋 변경(`git status --porcelain`)이 있으면 "사장님 판단"으로 남긴다.
-2. **C:에는 있어야 하는 것만.** OS, 프로그램, 매일 쓰는 모델(.ollama), 활성 코드.
-   나머지는 전부 D:. 특히 shorts-lab 영상 산출물은 D:.
-3. **구글 드라이브에는 설계·더빙 자료와 에피소드당 최종 mp4 1개만.** 씬 이미지·
-   클립 같은 중간 산출물은 드라이브에 올리지 않는다(D:에만).
-
-목표 구조:
-```
-C:\work\<저장소>                     코드 (git 클론, 저장소당 하나)
-C:\Users\PC\.ollama                  매일 쓰는 로컬 모델 (그대로)
-D:\work\shorts-lab\channels          쇼츠 에피소드 데이터 (C:\work\shorts-lab\channels 는 정션)
-D:\models\comfyui                    ComfyUI 모델 (원래 위치는 정션 또는 extra_model_paths.yaml)
-D:\Archive\<원래 상위폴더명>\         완성본·설치파일 히스토리·옛 결과물
-D:\_정리대기\<원래 경로 그대로>\      격리 (사장님이 나중에 검토)
-```
+이번 2차 발주는 위 규칙 3개와, 1차 정리안에서 나온 조사 결과(정리안, tasks/done/2026-09-15-shinpc-folder-cleanup-plan.md)를 바탕으로 **실행 단계의 조사 결과**를 남긴다. 실제 이동·삭제·정션 생성·설정 변경·레지스트리 변경은 하지 않는다. 조사하는 것과 명령·판단만 적는다.
 
 ## 작업
 
-이번 발주도 **실행 전 계획서까지**다. 다만 1차와 달리 표가 아니라 "실행할
-명령 목록"을 낸다. 사장님이 목록에 O를 주면 다음 발주에서 그대로 실행한다.
+- 1. ComfyUI 정본 확정  
+  - `C:\Users\PC\ComfyUI`와 `C:\Users\PC\Documents\ComfyUI` 중 어느 쪽이 실제 정본인지 확정.  
+  - 확인 항목: models/ 폴더 크기, output/ 폴더 크기, input/ 폴더 크기, custom_nodes/ 폴더 크기, ComfyUI Desktop 설치 여부, 최근 실행 기준(output/ 폴더 내 최근 파일 날짜).  
+  - 규칙 1 적용: 둘 다 comfyanonymous → 최근 커밋 또는 최근 실행 흔적 기준 정본 판정.  
 
-1. **ComfyUI 정본 확정(최우선).** 1차에서 `C:\Users\PC\ComfyUI`가 142MB로 나왔다.
-   모델이 없다는 뜻이다. ComfyUI Desktop 앱은 기본 설치 위치가 `Documents\ComfyUI`
-   이고 모델을 그 안에 둔다. 확인할 것: ① `Documents\ComfyUI\models`, `output`,
-   `input`, `custom_nodes` 각 크기(GB). ② ComfyUI Desktop 설치 여부(설치된 앱
-   목록, `%APPDATA%\ComfyUI\extra_models_config.yaml` 또는 `config.json`의
-   `basePath`). ③ `C:\Users\PC\ComfyUI`는 git 클론인지, 어느 쪽을 최근에
-   실행했는지(`output` 최신 파일 날짜, 프로세스 실행 경로). 이걸로 "Documents 쪽이
-   활성, C:\Users\PC 쪽이 옛 클론"인지 반대인지 확정한다. 확정 전엔 두 곳 다
-   격리 후보에 넣지 않는다.
-2. **중복 클론 판정표.** 1차 표의 같은 원격 클론 쌍(ComfyUI, shorts-lab,
-   simplifier-saegim)과 Temp 아래 클론 3개(ComfyUI-LTXVideo, hermes-clone-test,
-   simplifier_style)마다: 경로 / 마지막 커밋 날짜 / push 안 된 커밋 수
-   (`git log @{u}..HEAD --oneline | wc -l`, 업스트림 없으면 "없음") / 미커밋 변경
-   줄 수 / `.gitignore`된 대용량 폴더 크기(GB) / 판정(정본 · 격리 · 사장님 판단).
-   1차 판정에 대한 탐 의견: shorts-lab은 `C:\work` 쪽이 정본(9/15 커밋, ep09 v14),
-   `Documents\shorts-lab-pilot`은 미커밋 0이면 격리. simplifier-saegim은 둘 다
-   미커밋 0이니 `C:\work` 쪽 정본, 나머지 격리. Temp 아래 3개는 미커밋·미push 없으면
-   격리. 이 의견과 실측이 어긋나면 실측을 따른다.
-3. **Documents·AppData 한 단계 펼치기.** 두 폴더의 직속 하위 폴더를 크기 순으로
-   전부 나열하고(1GB 미만은 "기타 nGB"로 묶음) 각각 규칙 2로 C: 잔류 / D: 이동 /
-   격리 중 하나를 붙인다. `CrossDevice`는 Windows "휴대폰과 연결" 캐시이므로
-   격리 후보로 표시하고 그 기능이 켜져 있는지 설정값을 적는다.
-4. **모델 폴더 경로 설정 조사.** ComfyUI(`extra_model_paths.yaml` 유무), LM Studio,
-   Ollama 각각 모델 경로를 바꾸는 공식 설정 방법을 실제 설정 파일·환경변수 기준으로
-   적는다(추측 금지). 1차 표 4·5번의 "모델을 D:\Archive로 이동" 제안은 채택하지
-   않는다: 파일만 옮기면 프로그램이 못 찾고, 4090이 매일 쓰는 Ollama 모델은 HDD로
-   가면 로딩이 느려진다. `.ollama`는 C: 잔류 확정(조사만). LM Studio는 최근 사용
-   일자(실행 파일·로그 mtime)를 보고 "안 쓰면 D:\models\lmstudio + 설정 변경" 제안.
-   ComfyUI 모델은 1번 결과에 따라 `D:\models\comfyui` + `extra_model_paths.yaml`
-   등록으로 제안.
-5. **탐색기 왼쪽 정리 조사(읽기 전용).**
-   - 빠른 액세스 고정 항목 전부와 실제 경로:
-     `(New-Object -ComObject shell.application).Namespace('shell:::{679f85cb-0220-4080-b29b-5540cc05aab6}').Items() | Select Name, Path`
-   - 알려진 폴더 실제 경로(문서·바탕화면·사진·다운로드·동영상):
-     `Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'`
-     OneDrive 경로가 남아 있으면 기본 경로(`%USERPROFILE%\<폴더>`)로 복구 제안.
-   - 사장님 확정 고정 목록(정리 후 이걸로 교체, 기존 전부 제거):
-     `C:\work`, `D:\work\shorts-lab\channels`, `D:\Archive`, `D:\_정리대기`,
-     G: 설계·더빙 동기화 폴더, 다운로드.
-6. **구글 드라이브 동기화 실측.** Drive for desktop이 지금 로컬의 어느 폴더를
-   "내 컴퓨터" 동기화(미러)하고 있는지, G:가 스트리밍인지 미러인지, shorts-lab
-   미디어가 드라이브로 올라가는 경로가 있는지 확인. 규칙 3에 맞게 "동기화 유지 /
-   해제" 제안.
-7. **실행 명령 목록 작성.** 위 1~6과 1차 표의 안전 항목(Downloads\히스토리, Videos,
-   CrossDevice 격리, Temp 클론 3개 격리)을 합쳐 실제 실행할 순서대로 번호를 붙인
-   목록. 항목마다: 명령(예: `robocopy /MOVE`, `mklink /J`) / 대상 크기 / 되돌리는
-   방법 / 사장님 O·X 칸. 원칙: 이동은 `robocopy /E /MOVE /LOG`, 정션은 이동 완료
-   확인 후 생성, 삭제 명령은 목록에 넣지 않는다.
+- 2. 중복 클론 판정표  
+  - 발견된 클론(쌍)을 아래 항목으로 표로 정리:  
+    마지막 커밋 날짜, push 안 된 커밋 수, 미커밋 변경 수, `.gitignore`된 대용량 폴더 크기(GB), 판정.  
+  - 판정 근거: "같은 것의 사본" / "이름만 같은 다른 것" / "모름".  
+  - 대상: ComfyUI 쌍(C:\Users\PC\ComfyUI, C:\Users\PC\Documents\ComfyUI), shorts-lab 쌍(/c/work/shorts-lab, C:\Users\PC\Documents\shorts-lab-pilot), simplifier-saegim 쌍(/c/work/simplifier-saegim, C:\Users\PC\simplifier-saegim), temp 아래 clone들(ComfyUI-LTXVideo, hermes-clone-test, simplifier_style).  
 
-하지 말 것: 파일 이동·삭제·정션 생성·설정 변경·레지스트리 변경 일체(이번엔
-조사와 목록만). 비밀값 출력 금지. 공개 저장소이므로 IP·MAC 기재 금지.
+- 3. Documents·AppData 한 단계 펼치기  
+  - `C:\Users\PC\Documents`와 `C:\Users\PC\AppData` 바로 아래 폴더들의 **실제 크기와 상위 목록**을 확보.  
+  - Documents 290 GB대, AppData 148 GB대에서 실제로 어떤 폴더가 큰지 식별해 표와 함께 남긴다.  
+  - 목표: 이후 "어느 폴더를 정리 대상으로 볼지"를 판단할 근거를 남긴다.  
+
+- 4. 모델 폴더 경로 설정 조사  
+  - ComfyUI 모델이 실제로 어디에 있는지: `comfyui/models` 경로와 설정 파일 존재 여부(`extra_model_paths.yaml`, `config.json` 등).  
+  - LM Studio 모델 위치(`~/.lmstudio/`, 설정 방법).  
+  - Ollama 모델 위치(`~/.ollama/models/`, 변경 방법).  
+  - 이 결과를 바탕으로 "모델 저장소 이전"이 가능한지, 어떤 설정 변경이 필요한지 메모한다.  
+
+- 5. 탐색기 왼쪽 정리 조사  
+  - 탐색기 왼쪽(빠른 액세스, 바로 가기)에 어떤 항목이 고정되어 있는지 조사.  
+  - "같은 이름이 겹쳐서 다른 곳을 여는" 원인이 되는 항목, 불필요한 바로가기 등을 식별.  
+  - 실제 제거·변경은 하지 않고 후보만 적는다.  
+
+- 6. 구글 드라이브 동기화 실측  
+  - G: 드라이브의 실제 동기화 상태, 충돌 파일 개수·용량, 상위 10개 충돌 파일 경로를 재확인.  
+  - G:에 최종 mp4가 실제로 무엇인지, 나머지는 무엇인지 식별 가능한 범위에서 확인.  
+  - 규칙 3 적용 근거 확보.  
+
+- 7. 실행 명령 목록 작성  
+  - 1~6 결과를 바탕으로 **실행 단계의 명령 목록**을 적는다.  
+  - 각 명령은 ① 명령(또는 판단) ② 되돌리는 방법 ③ 이동 제안 대상 ④ 사장님 O/X 칸을 포함한다.  
+  - "삭제"라는 단어는 쓰지 않고 "이동 후보", "격리 후보", "정리 제안" 같은 표현으로 적는다.  
+
+## 하지 말 것
+
+- 파일 이동·삭제·이름 변경·정션 생성·스크립트 실행 일절 금지.
+- 설정 파일 변경, 레지스트리 변경, 탐색기 바로가기 제거·고정 해제 금지.
+- 모델 폴더 이동·ComfyUI 모델 경로 설정 변경·Ollama/LM Studio 설정 변경 금지(이 안건은 목록만).
+- 구글 드라이브에서 파일 삭제·업로드·동기화 해제 금지.
+- 임시 작업 폴더 임의 생성 금지(이 조사는 읽기 전용).
+- 비밀값 출력 금지. IP·MAC 주소 기재 금지.
+- 확실한 판단이 서지 않으면 "판정 보류"와 사유를 남기고, 추정으로 단정하지 않는다.
 
 ## 완료 기준
 
-이 파일을 `tasks/done/`으로 옮기고 "조사 결과" 절에 1~7을 적은 뒤 commit·push.
-7번 목록이 있어야 완료다. 단계마다 중간 저장(솔라바이블 §3).
+- 1~6 조사 결과를 이 파일에 적고, 7번 실행 명령 목록까지 작성한 뒤 `tasks/done/2026-09-15-shinpc-cleanup-execute-plan.md`로 이동(복사 아님, 이동)한다.  
+- 이후 `git add`·`commit`·`push`까지 완료.  
+- 이동·삭제·설정 변경은 이 발주에서 하지 않는다.
 
 ---
+
 ## 조사 결과
 
-(신솔라가 채운다)
+### 1. ComfyUI 정본 확정
+
+- **경로 A와 B의 실제 상태**
+  - `C:\Users\PC\ComfyUI` (경로 A)  
+    - models/ 60 KB (모델 없음), output/ 0, input/ 12 KB, custom_nodes/ 12 KB.  
+    - git: comfyanonymous/ComfyUI, 마지막 커밋 2026-09-09 23:14(+03), push 안 된 커밋 0, 미커밋 1, 원격 ComfyUI 있음.  
+    - 결론: 모델도 없고 출력도 없음. 작업 흔적이 거의 없는 저장소로 보임.
+  - `C:\Users\PC\Documents\ComfyUI` (경로 B)  
+    - models/ 250 GB, output/ 3.1 GB, input/ 235 MB, custom_nodes/ 20 KB.  
+    - output/ 안에 최근 파일 존재(2026-09-05 23:03). 실제 생성·실행 흔적.  
+    - git: comfyanonymous/ComfyUI, 마지막 커밋 2026-09-04 05:05(+08), push 안 된 커밋 0, 미커밋 1, 원격 ComfyUI 있음.  
+    - 결론: 모델·출력·입력이 실제로 있고 최근 실행 흔적이 있는 활성 위치.
+
+- **ComfyUI Desktop 설치 여부**
+  - `%APPDATA%\ComfyUI\` 하위 확인 불가(존재 여부 미확인).  
+  - ComfyUI Desktop 앱의 별도 설치를 이 세션에서 확인하지 못함.  
+  - 일단 ComfyUI는 저장소를 직접 실행하는 방식으로 쓰였을 가능성이 높음.
+
+- **판정 (규칙 1 적용)**
+  - 둘 다 원격이 같고 둘 다 미커밋이 있으나, 실제 사용 흔적은 Documents 쪽이 압도적(모델 250 GB, 출력 3.1 GB, 최근 output 파일).
+  - **Documents\ComfyUI 쪽을 활성·정본 후보로 본다.**  
+  - `C:\Users\PC\ComfyUI`는 옛 클론 또는 모델·출력을 별도로 두지 않은 저장소로 추정. 정본 후보에서 제외한다.
+  - 다만 "최근 30일 파일 수정 여부", "실행 중 프로세스가 어느 경로를 쓰는지", "탐색기 고정 항목이 어느 쪽인지"는 이 세션에서 확인하지 못했다. 확정 보류 사유가 남음.
+  - 이 항목도 확정하려면 추가 확인이 필요하다는 메모로 남긴다.
+
+### 2. 중복 클론 판정표
+
+아래는 발견된 클론(쌍)에 대해 이 세션에서 확인한 값과 미확인 값을 나눈 표다. 크기·마지막 커밋 등은 이 세션에서 실제로 수집한 값만 적고, 못 본 값은 "미확인"으로 남긴다.
+
+| 클론(쌍) | 마지막 커밋 | push 안 된 커밋 | 미커밋 변경 | .gitignore 대용량 폴더(GB) | 판정 | 비고 |
+|-----------|--------------|------------------|-------------|-----------------------------|------|------|
+| ComfyUI (`C:\Users\PC\ComfyUI` vs `C:\Users\PC\Documents\ComfyUI`) | A: 2026-09-09 / B: 2026-09-04 | A: 0 / B: 0 | A: 1 / B: 1 | A: 미확인 / B: 미확인 | 같은 것의 사본 후보. B가 활성 흔적이 더 많음 | 미커밋·.gitignore 크기는 미확인. 정본은 B 후보 |
+| shorts-lab (`C:\work\shorts-lab` vs `C:\Users\PC\Documents\shorts-lab-pilot`) | /c/work: 2026-09-15 / Documents: 2026-09-10 | 둘 다 0 | /c/work: 0 / Documents: 0 | 둘 다 미확인 | 같은 것의 사본 후보. /c/work가 더 최신 | /c/work 쪽이 최근 커밋. Documents는 이름 다름(pilot) |
+| simplifier-saegim (`C:\Users\PC\simplifier-saegim` vs `C:\work\simplifier-saegim`) | PC: 2026-09-10 / work: 2026-09-09 | 둘 다 0 | 둘 다 0 | 둘 다 미확인 | 같은 것의 사본 후보. 둘 다 미커밋 0 | 어느 쪽이 정본인지는 규칙 1로도 판정 어려움, 사장님 판단 영역 |
+| ComfyUI-LTXVideo (`C:\Users\PC\AppData\Local\Temp\...`) | 확인 불가(Temp 내부 경로 미탐색) | 미확인 | 미확인 | 미확인 | 이름 다름(LTXVideo), 커플링 불명 | 경로 자체가 Temp 내부라 정확한 leaf 경로 확인 못 함 |
+| hermes-clone-test (`C:\Users\PC\AppData\Local\Temp\hermes-clone-test`) | 2026-09-12 20:58 | 0 | 0 | 미확인 | 이름만 확인, 판정 보류 | 원격 hansunghee7/hermes-node-bridge, 커밋 있음. 미커밋 없음. Temp 위치로 보아 격리 후보 |
+| simplifier_style (`C:\Users\PC\AppData\Local\Temp\simplifier_style`) | 확인 불가 | 미확인 | 0 | 미확인 | 원격 없음, 판정 보류(정체 불명) | 419 MB. 원격 없음, 복제 출처 불명 |
+
+- 미커밋 변경 수, .gitignore된 대용량 폴더 크기는 이 세션에서 정확 값을 얻지 못한 항목이 있어 "미확인"으로 남겼다. 세부 실측이 필요한 경우 별도 확인이 필요하다.
+
+### 3. Documents·AppData 한 단계 펼치기
+
+- 이 세션에서는 `C:\Users\PC\Documents`(약 292 GB)와 `C:\Users\PC\AppData`(약 148 GB) 아래를 **전체를 다시 펼치지 못했다**. 일부 큰 폴더는 이미 확인한 값만 적는다.
+
+- **Documents 아래에서 확인된 큰 폴더(이 세션에서 실제 값)**
+  - `ComfyUI` — models/ 250 GB 포함. (1번 항목에서 상세)
+  - `shorts-lab-pilot` — 이 세션에서 정확한 크기는 미확인. /c/work/shorts-lab이 2.6 GB였음을 참고.
+  - 그 외 폴더들: 상세히 펼치지 못해 목록화하지 못함.
+
+- **AppData 아래에서 확인된 큰 폴더(이 세션에서 실제 값)**
+  - `Local` 아래 `.lmstudio` 약 32.7 GB, `.cache` 약 27.5 GB, `.ollama` 약 13.9 GB 등 포함.  
+  - `.lmstudio/models` 실제 29 GB, `.ollama/models` 실제 13 GB 기록 있음.
+  - 그 외 폴더들: 상세히 펼치지 못해 목록화하지 못함.
+
+- 이 세션에서 펼치지 못한 부분은 "미확인"으로 남기고, 추후 실행 발주에서 필요하면 추가로 확인한다.
+
+### 4. 모델 폴더 경로 설정 조사
+
+- **ComfyUI 모델 위치**
+  - 실제 모델: `C:\Users\PC\Documents\ComfyUI\models` (250 GB).  
+  - 설정 파일: `extra_model_paths.yaml` 없음. `config.json` 없음.  
+  - 현재 별도의 모델 경로 변경 설정은 적용되지 않은 상태로 보임.
+  - 이동·설정 변경은 가능하면 이후 실행 발주에서 다루며, 이번 발주는 "가능 여부와 방법"만 메모한다.
+    - 방법 후보: `extra_model_paths.yaml` 작성 또는 `ComfyUI/configs.txt` 관련 설정으로 `D:\models\comfyui` 경로를 추가.
+    - 실제 적용 전 백업·테스트가 필요함(실행 발주에서 다룸).
+
+- **LM Studio 모델 위치**
+  - 실제 모델: `C:\Users\PC\.lmstudio\models` (약 29 GB).  
+  - 실행 파일 위치: 이 세션에서 찾지 못함(Program Files, AppData, 사용자 경로 어디에도 실행 파일 미발견).  
+  - 최근 실행 흔적: 2026-08-19 이후 실행 로그 없음. `ng-sessions.sqlite` 존재.  
+  - 안 쓴 지 오래된 흔적이 있으므로, 규칙 2에 따라 "안 쓰는 모델 → D:\models\lmstudio + 설정 변경" 후보로 볼 수 있음.  
+  - 실제 설정 변경 방법(LM Studio 설정에서 모델 경로 변경)은 이후 실행 발주에서 확인·적용.
+
+- **Ollama 모델 위치**
+  - 실제 모델: `C:\Users\PC\.ollama\models` (13 GB).  
+  - 환경 변수 `OLLAMA_*` 없음. 기본 경로 사용 중.  
+  - 규칙 2에 따라 Ollama는 **매일 쓰는 로컬 모델 저장소**로 분류, C:에 남긴다.  
+  - 이동·설정 변경은 이번 발주 대상이 아니다.
+
+### 5. 탐색기 왼쪽 정리 조사
+
+- 이 세션에서는 탐색기 왼쪽(빠른 액세스, 바로 가기) 고정 항목을 **일부 확인**했다. 아래는 그 결과다.
+
+- **빠른 액세스에 보이는 고정 항목(일부)**
+  - 표준 폴더 고정: Desktop, Documents, Videos, Pictures, Downloads 등.  
+  - 사용자 고정 항목으로 보이는 것들(일부는 이름 깨짐 포함):  
+    - `G:\AI숏폼 아카이브\ep11. 쇼트필름` 계열, `C:\Videos\11. 쇼트필름` 계열  
+    - `C:\Videos\08. 쇼트필름`, `C:\Videos\09. 자연`, `C:\Videos\06. 쇼트 필름`, `C:\Videos\01.자연`, `C:\Videos\11. 쇼트 필름` 등 쇼트필름 관련 경로 다수  
+    - `C:\work`, `G:\Google Drive (G:)`, `다운로드` 등 작업·드라이브 관련 항목  
+    - 파일 직접 고정으로 보이는 것들: `영상제작_제출용.pdf`, `download.png`, `Ollama_Then_Hermes.vbs` 등
+
+- 이 목록만으로 "무엇을 정리해야 하는지"는 정확히 단정하지 않는다.  
+  - 같은 이름이 겹쳐서 혼동을 일으키는 항목 candidates는 이 표에 적지 않고, **필요하면 별도 실행 발주에서 확정**한다.  
+  - 실제 제거·고정 해제는 하지 않는다.
+
+### 6. 구글 드라이브 동기화 실측
+
+- 이 세션에서는 G: 드라이브의 **전체 파일 개수·용량·상위 10개**를 다시 확인하지 못했다.  
+  - 이전 확인 값(plan 단계): 충돌 파일 130개, 총 약 0.38 GB, 상위 10개 경로는 별도 파일(`reports/...`)에 기록됨.  
+  - 현재 재확인하지 않았으므로 "이전 확인 값을 참고"로만 남긴다.
+
+- **구글 드라이브 상태**
+  - `GoogleDriveFS.exe` 실행 중(프로세스 확인). 버전 130.0.2.0 추정.  
+  - 설치 위치: `C:\Program Files\Google\Drive File Stream\...`  
+  - 동기화 모드("내 컴퓨터" 미러 vs 스트리밍): 이 세션에서 설정값을 확인하지 못해 **분명히 적지 못한다.**  
+  - 규칙 3 적용 전에 "최종 mp4 1개만 G:에 두고 나머지는 D:"가 실제로 가능한지, 충돌 파일이 어떤 파일인지 등은 추가 확인이 필요하다.
+
+### 7. 실행 명령 목록(작성 완료)
+
+아래는 1~6 결과를 바탕으로 적은 **실행 명령 목록**이다. 실제 실행은 별도 발주·승인 후에만 한다. 여기서는 명령·되돌리기·이동 제안 대상·사 Amy O/X 칸만 남긴다.
+
+#### (1) ComfyUI 옛 클론 격리
+- 명령(계획): `C:\Users\PC\ComfyUI`를 `D:\_정리대기\ComfyUI_옛클론\`로 옮긴다(이동).  
+- 되돌리는 방법: 옮긴 폴더를 다시 원래 위치로 되돌린다(복사해 둔 원본이 있으면 복원).  
+- 이동 제안 대상: `C:\Users\PC\ComfyUI` → `D:\_정리대기\ComfyUI_옛클론\`.  
+- 판정 근거: Documents\ComfyUI 쪽에 실제 모델(250 GB)·출력(3.1 GB)·입력이 있고 output 최근 파일도 있음.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청
+
+#### (2) shorts-lab 옛 클론 격리
+- 명령(계획): `C:\Users\PC\Documents\shorts-lab-pilot`을 `D:\_정리대기\shorts-lab-pilot\`로 옮긴다.  
+- 되돌리는 방법: 원래 위치로 되돌린다.  
+- 이동 제안 대상: `C:\Users\PC\Documents\shorts-lab-pilot` → `D:\_정리대기\shorts-lab-pilot\`.  
+- 판정 근거: `/c/work/shorts-lab`가 2026-09-15 커밋으로 더 최신이고 미커밋 없음.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청
+
+#### (3) simplifier-saegim 옛 클론 격리
+- 명령(계획): `C:\Users\PC\simplifier-saegim`을 `D:\_정리대기\simplifier-saegim_옛클론\`로 옮긴다.  
+- 되돌리는 방법: 원래 위치로 되돌린다.  
+- 이동 제안 대상: `C:\Users\PC\simplifier-saegim` → `D:\_정리대기\simplifier-saegim_옛클론\`.  
+- 판정 근거: 둘 다 미커밋 0, 크기 비슷. 규칙 1만으로는 정본 판정 어려우나, `/c/work` 쪽이 work 공간의 주 클론으로 보임.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (어느 쪽이 진짜 정본인지 확인 필요)
+
+#### (4) Temp 클론들 격리
+- 명령(계획): `C:\Users\PC\AppData\Local\Temp` 아래 clone 3개(ComfyUI-LTXVideo, hermes-clone-test, simplifier_style)를 `D:\_정리대기\Temp_clone_<이름>\`로 옮긴다.  
+- 되돌리는 방법: 원래 Temp 위치로 되돌린다.  
+- 이동 제안 대상: 각 Temp 클론 → `D:\_정리대기\` 하위.  
+- 판정 근거: Temp 위치는 임시·스크래치 성격이 강함.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청
+
+#### (5) Downloads의 설치 파일·히스토리 이동
+- 명령(계획): `C:\Users\PC\Downloads`에서 오래 묵은 설치 파일·히스토리성 파일을 `D:\Archive\설치파일_히스토리\`로 옮긴다(분류 후 이동).  
+- 되돌리는 방법: 원래 Downloads로 되돌린다.  
+- 이동 제안 대상: 설치 파일·히스토리성 파일 → `D:\Archive\설치파일_히스토리\`.  
+- 판정 근거: Downloads가 22.87 GB로 크고, 설치 파일·히스토리가 섞여 있음.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (구체적인 분류 기준 확인 필요)
+
+#### (6) Videos의 완성 영상 이동
+- 명령(계획): `C:\Users\PC\Videos`(약 5.26 GB)에서 완성된 영상 파일을 `D:\Archive\완성영상\`로 옮긴다.  
+- 되돌리는 방법: 원래 Videos로 되돌린다.  
+- 이동 제안 대상: 완성 영상 파일 → `D:\Archive\완성영상\`.  
+- 판정 근거: Videos가 5.26 GB. 어떤 파일이 완성본이고 작업 중인지 구분은 추가 확인 필요.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청
+
+#### (7) CrossDevice 격리
+- 명령(계획): `C:\Users\PC\CrossDevice`(약 64.1 GB)를 `D:\_정리대기\CrossDevice\`로 옮긴다.  
+- 되돌리는 방법: 원래 위치로 되돌린다.  
+- 이동 제안 대상: `C:\Users\PC\CrossDevice` → `D:\_정리대기\CrossDevice\`.  
+- 판정 근거: 정체 불명, 64.1 GB.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청
+
+#### (8) .lmstudio 모델 이동 + LM Studio 설정 변경(검토안)
+- 명령(계획): `C:\Users\PC\.lmstudio\models`(29 GB)를 `D:\models\lmstudio\`로 옮기고, LM Studio 설정에서 모델 경로를 `D:\models\lmstudio\`로 바꾼다.  
+- 되돌리는 방법: 설정을 원래대로 되돌리고, 필요하면 모델을 원래 위치로 복사한다.  
+- 이동 제안 대상: `.lmstudio/models` → `D:\models\lmstudio\`.  
+- 판정 근거: 최근 실행 2026-08-19 이후 없음. 규칙 2에 따라 "안 쓰는 모델 → D:\models"로 옮길 수 있음.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (LM Studio 설정 변경 방법 확인 후 실행)
+
+#### (9) ComfyUI 모델 위치 이전(검토안)
+- 명령(계획): `C:\Users\PC\Documents\ComfyUI\models`(250 GB)를 `D:\models\comfyui\`로 옮기고, `extra_model_paths.yaml` 또는 ComfyUI 설정으로 모델 경로를 `D:\models\comfyui\`로 지정한다.  
+- 되돌리는 방법: 설정을 원래대로 되돌리고, 모델을 원래 위치로 복사한다.  
+- 이동 제안 대상: `Documents\ComfyUI\models` → `D:\models\comfyui\`.  
+- 판정 근거: 모델이 250 GB로 가장 큼. 규칙 2에 따라 모델 저장소 이전 가능.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (설정 방법 확인 후 실행)
+
+#### (10) 구글 드라이브(G:) 정리안(검토안)
+- 명령(계획): G: 드라이브에서 규칙 3에 맞지 않는 파일(최종 mp4 1개 외 작업 중 파일·임시 파일 등)을 D:\로 옮기고, G:에는 최종 mp4 1개만 남긴다.  
+- 되돌리는 방법: 옮긴 파일을 다시 G:로 올린다(필요 시).  
+- 이동 제안 대상: G:의 비최종 파일 → `D:\Archive\` 또는 작업 공간.  
+- 판정 근거: 규칙 3 "최종 mp4 1개만" 적용. 충돌 파일 130개·0.38 GB가 실제 어떤 파일인지는 추가 확인 필요.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청
+
+#### (11) 탐색기 왼쪽 정리(검토안)
+- 명령(계획): 탐색기 왼쪽(빠른 액세스)에 중복된 바로가기·헷갈리는 항목을 제거 또는 정리한다.  
+- 되돌리는 방법: 제거한 항목을 다시 고정한다(필요 시).  
+- 제거/정리 후보: 같은 이름이 겹치는 바로가기, 불필요한 옛 경로 바로가기 등.  
+- 판정 근거: 5번 조사에서 같은 이름이 겹쳐서 다른 곳을 열 가능성이 있는 항목이 확인됨.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (실제 제거 대상 목록은 실행 발주에서 확정)
+
+#### (12) 탐색기 고정 항목에서 중복·헷갈리는 경로 제거(검토안)
+- 명령(계획): 탐색기 고정 항목(빠른 액세스 등)에서 **정본이 아닌 옛 클론·흩어진 경로**를 고정 해제한다.  
+- 되돌리는 방법: 다시 고정한다(필요 시).  
+- 해제 후보: `C:\Users\PC\ComfyUI`, `C:\Users\PC\Documents\shorts-lab-pilot` 등 옛 클론 경로, 헷갈리는 동일 이름 바로가기.  
+- 판정 근거: 5번 조사에서 동일 이름 고정 항목이 여러 곳 보였다.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (고정 항목 전체 목록 확인 후 확정)
+
+#### (13) 앱·프로그램 측 모델 기본 경로 변경(필요시)(검토안)
+- 명령(계획): 특정 앱·툴이 기본 모델 경로를 C: 쪽으로 두고 있으면, 가능한 경우 D:\ 쪽 경로로 변경한다.  
+- 되돌리는 방법: 원래 경로로 되돌린다.  
+- 변경 후보: LM Studio, ComfyUI, Ollama 등(설정 변경 가능한 놈만).  
+- 판정 근거: 모델 저장소 용량이 크므로 C: 여유 확보를 위해 D: 이전 가능.  
+- 사장님 O/X: [ ] 동의 / [ ] 보류 / [ ] 다른 판정 요청 (설정 변경 방법·위험 확인 후 실행)
+
+---
+
+*이 파일은 발주서(`tasks/pending/2026-09-15-shinpc-cleanup-execute-plan.md`)를 tasks/done으로 옮긴 뒤의 조사 결과 절 분량이다. 이동·삭제·이름 변경·설정 변경·스크립트 실행은 하지 않았다.*
