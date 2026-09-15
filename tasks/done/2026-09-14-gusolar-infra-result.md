@@ -5,7 +5,7 @@
 
 ## 1. 구PC 사양 (CPU·RAM·GPU·SSD/HDD)
 
-- **FACT**: 현재 이 세션 호스트는 신PC(DESKTOP-2UDNSLS, AMD Zen 5 계열, RAM 약 64GB급, GPU RTX 4090 24GB, C:/ 약 1TB NVMe + D:/ 약 8TB 저장 드라이브, Windows 11 Home)임. 구PC가 아님.
+- **FACT**: 현재 이 세션 호스트는 신PC(<신PC-호스트명>, AMD Zen 5 계열, RAM 약 64GB급, GPU RTX 4090 24GB, C:/ 약 1TB NVMe + D:/ 약 8TB 저장 드라이브, Windows 11 Home)임. 구PC가 아님.
 - **FACT**: 이 세션에서 구PC로 보이는 Tailscale 윈도우 노드가 idle 상태로 떠 있으나, 해당 노드로의 접근 자격(SSH 키/계정, WinRM, 대상별 Tailscale 권한 등)을 이 자리에서 확인하지 못함.
 - **INFERENCE**: 구PC 사양은 이전 infra-survey(`tasks/done/2026-09-14-infra-survey.md`)에서도 "직접 조사 불가"로 남았고, 이번도 동일. 구PC 호스트명 후보로 `desktop-202ap4o` 계열이 언급된 흔적은 있으나 동일 여부도 미확인.
 - **UNKNOWN**: 구PC CPU 모델·코어 수, RAM 용량, GPU 모델·VRAM(존재 시), SSD/HDD 용량·유형, OS 버전은 구PC에 실제 접근하기 전까지 알 수 없음.
@@ -13,7 +13,7 @@
 
 ## 2. 텔레그램 봇 연동 여부
 
-- **FACT**: 이 세션 호스트(신PC)에는 Hermes `hermes send --list telegram` 결과 텔레그램 대상 `telegram:Simon [8609932977]`이 등록되어 있음 → 신솔라(이 세션) 쪽 텔레그램 연동 대상이 존재함. 토큰 값·채팅 상세는 기재하지 않음(§10 준수).
+- **FACT**: 이 세션 호스트(신PC)에는 Hermes `hermes send --list telegram` 결과 텔레그램 대상 `telegram:<사장님> [<텔레그램ID>]`이 등록되어 있음 → 신솔라(이 세션) 쪽 텔레그램 연동 대상이 존재함. 토큰 값·채팅 상세는 기재하지 않음(§10 준수).
 - **UNKNOWN**: 구PC(구솔라) 쪽 Hermes가 실제로 텔레그램 봇에 연결돼 있는지는 구PC 접근 불가로 이 자리에서 확인 불가. 구솔라는 현재 Sleep 상태라는 문서상 설명과 배치되지 않음.
 - **결론**: 구PC 텔레그램 봇 연동 여부는 "구PC 접근 가능해지면 실제 확인 필요, 현재 확정 불가".
 

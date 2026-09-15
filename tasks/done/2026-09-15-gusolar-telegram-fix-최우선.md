@@ -34,7 +34,7 @@ status: DONE
   - 이후 "Disconnected from Telegram"만 반복, "Connected to Telegram" 기록 없음. 즉 이 게이트웨이는 2026-09-09 이후 텔레그램 연결을 유지하지 못한 상태로 떠 있었음.
 - gateway-stdio.log: "Sticky Telegram path 149.154.166.110 failed", "IPv4 Telegram API IP 149.154.166.110 failed" 반복 — IPv4 sticky path가 계속 실패.
 
-**원인 판단(추정 — 단정 아님):** 게이트웨이 자체는 떠 있으나, 텔레그램 API(149.154.166.110, 149.154.167.220)로의 연결 유지가 불안정함(IPv4 sticky path 실패 반복, heartbeat probe 문제). config.yaml의 `platforms.telegram.enabled: true`는 맞지만, 연결 유지가 안 되는 상태. auth.json의 봇 토큰(8896539486:***, 마스킹됨)은 설정돼 있고, allowed_users 8609932977도 설정돼 있음 — 인증 정보 자체는 정상으로 보임(§10 준수, 토큰 전체 노출 안 함). 네트워크 도달성은 4번에서 확인.
+**원인 판단(추정 — 단정 아님):** 게이트웨이 자체는 떠 있으나, 텔레그램 API(149.154.166.110, 149.154.167.220)로의 연결 유지가 불안정함(IPv4 sticky path 실패 반복, heartbeat probe 문제). config.yaml의 `platforms.telegram.enabled: true`는 맞지만, 연결 유지가 안 되는 상태. auth.json의 봇 토큰(8896539486:***, 마스킹됨)은 설정돼 있고, allowed_users <텔레그램ID>도 설정돼 있음 — 인증 정보 자체는 정상으로 보임(§10 준수, 토큰 전체 노출 안 함). 네트워크 도달성은 4번에서 확인.
 
 ### 3. 직접 시작 시도 (해당 없음 — 게이트웨이 이미 떠 있었음)
 - 게이트웨이가 이미 떠 있었으므로 "직접 시작"은 불필요. 대신 재시작으로 연결 복구를 시도(5번 조치로 이어짐).
@@ -67,9 +67,9 @@ status: DONE
 
 이전 보고(08:56·09:08·09:18 미응답)에서, 09:18 메시지는 **실제로는 처리·응답됐고 로그도 남아 있음**을 방금 확인했다. 세부:
 
-- gateway-stdio.log 09:18:15: inbound message dispatch 기록 존재 — 세션 agent:main:telegram:dm:8609932977에 메시지 전달됨(내용 길이 99자).
-- gateway.log 09:18:15.376: "Normal dispatch: fwd caller agent:main:telegram:dm:8609932977" — 세션으로 전달.
-- gateway.log 09:18:15.437: "Telegram inbound: sender 8609932977" — 발신자(allowed_users 8609932977 = 사장님) 확인.
+- gateway-stdio.log 09:18:15: inbound message dispatch 기록 존재 — 세션 agent:main:telegram:dm:<텔레그램ID>에 메시지 전달됨(내용 길이 99자).
+- gateway.log 09:18:15.376: "Normal dispatch: fwd caller agent:main:telegram:dm:<텔레그램ID>" — 세션으로 전달.
+- gateway.log 09:18:15.437: "Telegram inbound: sender <텔레그램ID>" — 발신자(allowed_users <텔레그램ID> = 사장님) 확인.
 - gateway.log 09:18:24.902: "Telegram outbound sent successfully" — 응답 발송 성공, 2036바이트.
 
 **즉 09:18 메시지는 게이트웨이가 받아서 처리했고 응답까지 나갔다.** 09:08 메시지도 stdio.log에 09:08:35 dispatch 기록이 있는지 확인해야 하나, 위의 09:18 기록으로 볼 때 게이트웨이가 메시지 수신·처리 자체는 가능한 상태다.
@@ -78,7 +78,7 @@ status: DONE
 
 ### 08:56 메시지 재확인 필요
 - 08:56 메시지는 gateway.log·gateway-stdio.log 양쪽에서 inbound 기록이 안 보임(게이트웨이 연결 자체가 안 된 시점일 가능성).
-- 단, stdio.log에 08:56:27 "New session created: agent:main:telegram:dm:8609932977" 기록이 있어서, 세션 생성 자체는 감지됨. 메시지가 세션 생성 전에 들어왔거나, 세션 생성 후 라우팅 전 유실 가능성도 있음(확정 아님).
+- 단, stdio.log에 08:56:27 "New session created: agent:main:telegram:dm:<텔레그램ID>" 기록이 있어서, 세션 생성 자체는 감지됨. 메시지가 세션 생성 전에 들어왔거나, 세션 생성 후 라우팅 전 유실 가능성도 있음(확정 아님).
 - 08:56 메시지 미응답은 게이트웨이 연결 부재 상태로 추정(연결 없던 시점).
 
 ### 현재 연결 상태 (2026-09-15 09:20 기준)

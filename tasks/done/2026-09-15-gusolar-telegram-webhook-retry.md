@@ -54,7 +54,7 @@ status: IN_PROGRESS → BLOCKED
 ## 기술적 참고
 
 - 현재 `.env`에는 구버전 URL(`chubby-aging-permitted-favorite`)이 남아 있음 — 텔레그램 API가 이 hostname을 resolve 못 해서(`Bad webhook: failed to resolve host`) 게이트웨이 시작 시 webhook 설정에 실패함(10:48 로그 확인).
-- config.yaml에는 텔레그램 enabled, bot_token, allowed_users(8609932977) 설정돼 있음.
+- config.yaml에는 텔레그램 enabled, bot_token, allowed_users(<텔레그램ID>) 설정돼 있음.
 - `hermes gateway status`: PID 7192 실행 중, 단 이전 update 후 재시작 안 됨 경고 있음.
 
 ---

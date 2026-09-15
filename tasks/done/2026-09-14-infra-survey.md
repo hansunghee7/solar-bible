@@ -41,7 +41,7 @@ status: QUEUED
 
 ### 1. 신PC 사양 (이 세션 호스트 = 신PC로 판정)
 
-- 호스트명: DESKTOP-2UDNSLS
+- 호스트명: <신PC-호스트명>
 - CPU: AMD64 Family 25 Model 97 Stepping 2 AuthenticAMD, ~3701MHz (1소켓·1코어 보고; Zen 5 계열로 보임, 실제 물리 코어는 추가 확인 필요)
 - RAM: Total Physical Memory 66,267MB (약 64.7GB급), Available 31,467MB — systeminfo 표면값 기준 약 64GB급
 - GPU: NVIDIA GeForce RTX 4090, VRAM 24564 MiB(약 24GB), 드라이버 591.86
