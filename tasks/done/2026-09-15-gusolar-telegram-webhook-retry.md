@@ -1,91 +1,62 @@
-처리 중 (시작 10:20 UTC+9) — 자동 폴러 처리, 충돌 방지용 커밋 (재시도)
-처리 중 (시작 10:15 UTC+9) — 자동 폴러 처리, 충돌 방지용 커밋
-처리 중 (10:16 UTC+9) — cloudflared 확인: 이미 설치됨(v2026.9.1, /c/work/solar-bible/cloudflared.exe). tunnel URL 확보: https://alt-zealand-examines-baskets.trycloudflare.com
-처리 중 (10:17 UTC+9) — 자동 폴러 중단: 게이트웨이 webhook 전환에 필요한 `.env` 쓰기 및 `hermes gateway stop/restart`가 승인 패턴(`access to Hermes secrets`, `stop/restart hermes gateway`)으로 스마트 거부되어 2~3단계 진행 불가. 수동 승인 필요.
+처리 중 (시작 10:50 UTC+9) — 자동 폴러 처리, 충돌 방지용 커밋 (재시도 2)
 
-## 발주: 탐 → 구솔라 (재시도 — curl 다운로드 실패, 우회법 이미 확인됨)
+## 발주: 탐 → 구솔라 (재시도 2 — tunnel 재확보 성공, env 쓰기는 승인 차단)
 
-status: IN_PROGRESS → WEBHOOK_READY (2단계 승인 병목)
+status: IN_PROGRESS → BLOCKED
 
 받는 이: 구솔라 — 최우선
 
 ## 배경
 
-`tasks/done/2026-09-15-gusolar-telegram-webhook.md`(1차)에서 cloudflared
-설치가 curl로 실패했다(error 23, 쓰기 문제 추정). **그런데 같은 시각
-사장님이 지켜보던 다른 인터랙티브 세션에서는 curl 대신 파이썬
-(`urllib.request`)으로 우회해서 cloudflared 다운로드에 실제로
-성공했다(54MB, 확인됨).** 즉 방법은 이미 알려져 있다 — curl을 다시
-시도하지 말고 곧바로 파이썬 방식을 써라.
+`tasks/done/2026-09-15-gusolar-telegram-webhook.md`(1차)에서 cloudflared가 이미 설치돼 있고 tunnel 실행도 가능함을 확인함. 이전 사이클들에서 curl 다운로드 실패나 env 쓰기 승인 차단으로 2~3단계 진행 불가였음.
 
-**중요**: 이 작업 파일을 인터랙티브 세션(사람이 지켜보는 터미널)과
-자동 폴러가 동시에 집어서 서로 다른 결과를 커밋하는 충돌이 있었다.
-**이 파일을 열자마자 맨 위에 "처리 중 (시작 HH:MM)"을 적어 커밋·push부터
-한 번 해라** — 그래야 다른 세션이 겹치는 걸 방지한다.
+이번 사이클: 오래된 cloudflared 터널 3개(PID 278, 684, 230) 정리 후 새 터널 생성 성공.
 
-## 작업
+## 1단계: 임시 공개 HTTPS 주소 (완료)
 
-1. curl로 cloudflared 다운로드를 시도하지 마라(이미 실패 확인됨).
-   대신 Python으로 받는다:
-   ```python
-   import urllib.request
-   url = "https://github.com/cloudflare/cloudflared/releases/download/2026.9.1/cloudflared-windows-amd64.exe"
-   dst = "C:/Users/Desktop/AppData/Local/Temp/cloudflared.exe"
-   urllib.request.urlretrieve(url, dst)
-   ```
-   (경로는 이 PC의 실제 쓰기 가능한 경로로 조정해라. bash에서 접근 시
-   `/tmp` 경로 변환 문제가 있었으니, 다운로드 후 bash에서 실제로 파일이
-   보이는지 `ls`로 재확인해라 — 지난번처럼 Python엔 보이는데 bash에
-   안 보이면 실제 물리 경로를 다시 찾아서 접근 가능한 곳으로 복사해라.)
-2. 이후 `tasks/pending/2026-09-15-gusolar-telegram-webhook.md`에 적힌
-   1~3단계(Quick Tunnel 실행 → webhook 모드 전환 → 실제 검증)를 그대로
-   따른다. 그 파일의 원본 발주 내용은 그대로 유효하다 — 방법만 이걸로
-   바꿔라.
+- cloudflared 버전: 2026.9.1 (확인됨, `/c/Users/Desktop/Temp/cloudflared`)
+- 이전 tunnel 3개 모두 kill 완료
+- **새 Quick Tunnel 실행 성공**:
+  ```
+  https://polished-mario-serving-scheduled.trycloudflare.com
+  ```
+- Hermes 게이트웨이 로컬 포트 8443으로 tunnel 연결 (`cloudflared tunnel --url http://localhost:8443`)
+- **curl로 터널 응답 확인**: HTTPS 530 (chubby-... 시절 URL) → 502 (alt-zealand 시절 URL) → 새 URL은 현재 tunnel 안정적 연결 중. 단, 게이트웨이(8443)가 아직 webhook 모드로 뜨지 않아 tunnel 단독으로는 200 응답 없음(예상됨).
 
-## 완료 기준
+## 2단계: Hermes webhook 모드 전환 (차단 — 수동 승인 필요)
 
-`tasks/pending/2026-09-15-gusolar-telegram-webhook.md`와 동일한 완료
-기준(3단계 실제 검증까지)을 채운 뒤
-`tasks/done/2026-09-15-gusolar-telegram-webhook-retry.md`로 옮기고 git
-add·commit·push한다. **사장님의 실제 텔레그램 응답 확인 전까지는
-"DONE=VERIFIED"라고 쓰지 마라.**
+- **필요한 조치**: `.env`의 `TELEGRAM_WEBHOOK_URL`과 `TELEGRAM_WEBHOOK_SECRET`을 새 값으로 갱신 후 `hermes gateway restart`
+- **새 값**:
+  - `TELEGRAM_WEBHOOK_URL=https://polished-mario-serving-scheduled.trycloudflare.com/telegram`
+  - `TELEGRAM_WEBHOOK_SECRET=<새로 생성 필요 — 아래 참조>`
+- **차단 사유**: `.env` 쓰기가 보호된 시크릿 파일 접근으로 승인 패턴 스마트 거부됨. `hermes gateway restart`도 승인 패턴(상품: "stop/restart hermes gateway")으로 거부될 가능성 높음. **인터랙티브 세션(사람 승인 필요)에서 처리 요망.**
 
----
+## 3단계: 실제 검증 (2단계 통과 후 진행 가능)
 
-## 실제 수행 결과 (2026-09-15 자동 폴러 실행 소견)
+- 게이트웨이 재시작 후 로그에 `[telegram] Connected to Telegram (webhook mode)` 확인
+- 이후 사장님께 텔레그램으로 검증 문구 요청 → inbound/outbound 실제 응답 확인
 
-### 1단계: cloudflared 다운로드 및 Quick Tunnel — 완료 (사람 인터랙티브 세션 + 자동 폴러 재확인과 일치)
+## 완료 기준 미충족 사유
 
-- curl 다운로드 실패(1차) 후, 다른 인터랙티브 세션에서 Python(`urllib.request.urlretrieve`)으로 재시도 → **성공** (54MB, 확인됨).
-- 이번 자동 폴러 실행에서도 cloudflared.exe 정상 확인: Version 2026.9.1, PE32+ x86-64.
-- Quick Tunnel 재실행 성공: `https://ordering-respond-backgrounds-communicate.trycloudflare.com` 확보 (30초 후 프로세스 종료로 소멸 — 상시 용도는 아님).
-- 즉 1단계는 **실질 완료**. 터널 주소는 필요시 새 걸 다시 받으면 됨.
+1~2단계 중 1단계(tunnel)만 완료. 2단계(.env 갱신 + 게이트웨이 재시작)는 승인 차단으로 자동화 불가. 3단계 검증은 2단계 이후로 미뤄짐.
 
-### 2단계: Hermes webhook 모드 전환 — 미진행 (승인 패턴 병목)
+## 사장님 확인 요청
 
-- 필요한 작업: `.env`에 `TELEGRAM_WEBHOOK_URL` / `TELEGRAM_WEBHOOK_SECRET` 작성, `hermes gateway restart`.
-- 이번 자동 폴러 실행에서도 동일하게 **스마트 거부**됨:
-  - `.env` 쓰기 → `access to Hermes secrets` 관련 승인 패턴으로 거부.
-  - `hermes gateway stop/restart` → `stop/restart hermes gateway` 관련 승인 패턴으로 거부.
-- 따라서 webhook 모드 진입(`[telegram] Connected to Telegram (webhook mode)`)은 아직 확인되지 않음.
-- **이 병목은 자동 폴러가 승인을 스스로 득할 수 없어서 넘기 불가. 수동 승인 필요.**
+> **사장님, 구PC에서 webhook용 새 tunnel URL 확보했습니다: https://polished-mario-serving-scheduled.trycloudflare.com**
+>
+> **webhook 모드로 전환하려면 `.env` 갱신 + `hermes gateway restart`가 필요한데, 현재 자동 폴러 환경에서는 시크릿 파일(.env) 쓰기와 게이트웨이 재시작이 승인 패턴으로 막혀 있습니다.**
+>
+> **인터랙티브 세션에서 다음 조치 후 구솔라에게 "웹훅 검증1"이라고 텔레그램 보내주세요:**
+> 1. `.env`에 `TELEGRAM_WEBHOOK_URL=https://polished-mario-serving-scheduled.trycloudflare.com/telegram` 및 새 `TELEGRAM_WEBHOOK_SECRET`(32바이트 hex) 쓰기
+> 2. `hermes gateway restart` 실행
+> 3. 게이트웨이 로그에 `webhook mode` 연결 확인
 
-### 3단계: 실제 검증 — 미진행 (2단계 미완료)
+## 기술적 참고
 
-- 사장님 텔레그램 검증 문구("웹훅 검증1" 등) 발송·수신·답장 확인은 2단계 이후.
-- 현재로는 "웹훅 모드 전환 완료, 검증 대기"도 아직 아님 — **웹훅 모드 진입 자체가 아직 안 됨.**
-
-### 현재 상태 요약
-
-- 게이트웨이는 떠 있고 텔레그램에 **polling 모드**로 연결되어 있음 (gateway_state.json connected, 로그 마지막 갱신 2026-09-15 09:10경).
-- cloudflared + Quick Tunnel은 준비 완료. webhook 모드 진입에 필요한 터널 주소는 언제든 새로 확보 가능.
-- webhook 모드 진입 장벽은 기술 문제가 아니라 승인 패턴(.env·gateway restart). 자동 폴러는 이 관문을 혼자 못 넘음.
+- 현재 `.env`에는 구버전 URL(`chubby-aging-permitted-favorite`)이 남아 있음 — 텔레그램 API가 이 hostname을 resolve 못 해서(`Bad webhook: failed to resolve host`) 게이트웨이 시작 시 webhook 설정에 실패함(10:48 로그 확인).
+- config.yaml에는 텔레그램 enabled, bot_token, allowed_users(8609932977) 설정돼 있음.
+- `hermes gateway status`: PID 7192 실행 중, 단 이전 update 후 재시작 안 됨 경고 있음.
 
 ---
 
-## 미처리 사유
-
-- 1단계(cloudflared + Quick Tunnel)는 완료.
-- 2단계(webhook 모드 전환)에서 `.env` 쓰기 및 `hermes gateway stop/restart`가 승인 패턴으로 스마트 거부되어 자동 폴러 단독 진행 불가. 수동 승인 필요.
-- pending 원본은 지우지 않고 이대로 유지하려 했으나, 이번 실행은 done으로 옮기면서 정리함(원본은 이 커밋에서 삭제). 재처리 가능한 상태가 되면 새로 pending 생성.
-- 사장님의 실제 텔레그램 응답 확인 전이므로 "DONE=VERIFIED" 아님 — "웹훅 모드 전환 준비 완료, 2단계 승인 병목, 검증 대기"로 기록.
+처리 중 (10:50 UTC+9) — 자동 폴러 처리 완료, 2단계 이후는 수동 승인 필요.
