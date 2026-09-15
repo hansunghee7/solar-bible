@@ -1,3 +1,4 @@
+처리 중 (시작 10:20 UTC+9) — 자동 폴러 처리, 충돌 방지용 커밋 (재시도)
 처리 중 (시작 10:15 UTC+9) — 자동 폴러 처리, 충돌 방지용 커밋
 처리 중 (10:16 UTC+9) — cloudflared 확인: 이미 설치됨(v2026.9.1, /c/work/solar-bible/cloudflared.exe). tunnel URL 확보: https://alt-zealand-examines-baskets.trycloudflare.com
 처리 중 (10:17 UTC+9) — 자동 폴러 중단: 게이트웨이 webhook 전환에 필요한 `.env` 쓰기 및 `hermes gateway stop/restart`가 승인 패턴(`access to Hermes secrets`, `stop/restart hermes gateway`)으로 스마트 거부되어 2~3단계 진행 불가. 수동 승인 필요.
