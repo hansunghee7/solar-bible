@@ -53,7 +53,7 @@
 
 로컬 클라이언트가 **bash**일 때:
 ```bash
-ssh pc@<PC-IP> 'hermes chat -q "echo hello"'
+ssh <user>@<PC-IP> 'hermes chat -q "echo hello"'
 ```
 - 2026-09-15 신PC 자기 자신(loopback, 같은 PC의 Tailscale IP)으로 실측:
   비밀번호 없이 키 인증 성공, 원격 헤르메스가 정상 응답
@@ -94,13 +94,13 @@ PowerShell 5.1과 PowerShell 7.2 이하는 외부 실행파일(ssh.exe)에 인�
 넘긴다. 헤르메스 문서에 stdin 입력은 셸 해석 없이 글자 그대로 들어간다고
 돼 있다. 긴 지시문, 따옴표, `$` 같은 문자가 섞여도 안전하다.
 ```powershell
-"echo hello" | ssh pc@<PC-IP> hermes chat --query-file -
+"echo hello" | ssh <user>@<PC-IP> hermes chat --query-file -
 ```
 (대안: 큰따옴표를 백슬래시로 이스케이프하는 방법도 있으나, 여러 줄
 지시문에는 stdin 방식이 더 안전해 기본값으로 삼는다.)
 
 **실측 상태**: DONE=VERIFIED. 2026-09-15 노트북(PowerShell)에서
-`"echo hello" | ssh pc@<PC-IP> hermes chat --query-file -` 실행,
+`"echo hello" | ssh <user>@<PC-IP> hermes chat --query-file -` 실행,
 멀티워드 질의가 그대로 전달돼 정상 응답(Session
 20260915_231358_613a78). **PowerShell 클라이언트의 멀티워드 질의는
 표준입력 방식을 기본으로 쓴다.**
@@ -109,7 +109,7 @@ PowerShell 5.1과 PowerShell 7.2 이하는 외부 실행파일(ssh.exe)에 인�
 
 - ~~신PC 외 다른 물리 기기에서 접속~~ → **완료**. 2026-09-15 노트북에
   Tailscale 신규 설치(`<노트북-IP>`) + 신규 키 등록 후
-  `ssh pc@<PC-IP> hermes chat -q hello` 실측 성공(Session
+  `ssh <user>@<PC-IP> hermes chat -q hello` 실측 성공(Session
   20260915_230434_dd4e88).
 - ~~PowerShell 클라이언트 멀티워드 질의~~ → **완료**. 위 stdin 방식으로
   해결(Session 20260915_231358_613a78).
