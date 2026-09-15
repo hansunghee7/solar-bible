@@ -117,6 +117,38 @@ PowerShell 5.1과 PowerShell 7.2 이하는 외부 실행파일(ssh.exe)에 인�
   파킹 상태라 범위 밖. `hermes-node-bridge/tasks/incoming/
   GU_SOLAR_CHECK_SSH_STATUS.md`에 별도로 확인 요청이 올라가 있음.
 
+## 실측: 직접 호출 vs GitOps 비교 (2026-09-15/16, 로컬 탐 야간 과제 3)
+
+같은 PC(신솔라)에서 비슷한 규모의 읽기 전용 조사 과제 하나씩을 두 채널로
+나란히 실행해 비교했다.
+
+| 항목 | 직접 호출 (F0-1, PC identity) | GitOps (F0-2, 네트워크 경로) |
+|---|---|---|
+| 발주 시각 | 15:09:42Z | 15:10:30Z (push) |
+| 픽업 시각 | 즉시(동기 호출, 픽업 개념 없음) | 15:13:30Z 경으로 추정(다음 3분 주기, 발주가 직전 크론 실행과 겹쳐 1주기 밀림) |
+| 완료 시각 | 15:10:18Z | 15:14:56Z (done 커밋), 15:15:17Z (pending 삭제 커밋) |
+| 총 소요 | 약 36초 | 약 4분 26초~4분 47초 |
+| 결과 품질 | 6개 항목 중 5개 정확 답변, 1개(LAN IP)만 "확인 불가" | 3개 항목 모두 답변, 정책(민감정보 비기재) 준수, 일부 판정은 "후속 조사로 미룸"으로 모호하게 남김 |
+
+**주의사항(직접 호출)**: 기본 설정(`config.yaml`의 `model.provider: openai-codex` +
+`model.default: upstage/solar-pro4:free`)으로 첫 시도(15:08:03~15:08:43Z)는
+`HTTP 400: 'solar-pro4:free' model is not supported when using Codex with a
+ChatGPT account`로 실패했다. `hermes doctor`가 같은 문제를 이슈 1번으로
+잡아낸다(모델에 vendor 프리픽스가 있는데 provider가 openai-codex로 되어
+있음). 크론 잡(`solar-bible-tasks-poller`)은 생성 시점에 박아둔
+`provider_snapshot: nous`를 그대로 쓰므로 이 설정 오류 영향을 안 받아 계속
+정상 동작해왔다(완료 197회 무사고). 직접 호출은 config.yaml을 고치는 대신
+`--provider nous` 플래그를 명시해서 우회했다(재시도 15:09:42Z, 성공).
+config.yaml 자체를 고치는 건 이번 과제 범위(읽기 전용/되돌릴 수 있는 것만)
+밖이라 손대지 않았다. 백로그 L1-4(Hermes Primary→4090)와 얽힌 문제라 별도
+발주가 맞다.
+
+**판정**: 짧은 조사성 과제는 직접 호출이 압도적으로 빠르다(36초 대
+4분 47초, 약 8배). 10분 문턱 기준(지시서)에는 둘 다 못 미쳤지만, GitOps는
+크론 주기(3분) 자체가 최소 지연이라 초 단위로 끝나는 과제엔 항상
+불리하다. 이후 과제는 지시서대로 직접 호출을 기본으로 쓰고, 10분을 넘길
+것 같은 과제만 GitOps로 보낸다.
+
 ## 폴링 대체안 (판단 진행 중, 확정 아님)
 
 클로드 쪽 25분 폴링은 SSH 직결로 대체하는 대신, 헤르메스가
