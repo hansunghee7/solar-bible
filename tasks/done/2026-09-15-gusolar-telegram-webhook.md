@@ -58,10 +58,19 @@ add·commit·push한다. **사장님의 실제 텔레그램 응답 확인 전까
 ### 1단계: cloudflared 설치 및 Quick Tunnel
 
 - **cloudflared 설치 여부 확인**: `cloudflared --version` → 명령 없음(설치 안 됨).
-- **설치 시도**: 
+- **설치 시도 (1차 — curl)**:
   - `curl -L --connect-timeout 15 --max-time 120 -o /c/Users/PC/AppData/Local/hermes/cloudflared.exe "https://github.com/cloudflare/cloudflared/releases/download/2026.9.1/cloudflared-windows-amd64.exe"` 실행.
   - 결과: **다운로드 실패** (curl error 23 — "client returned ERROR on write"). 파일 경로 문제 또는 쓰기 권한 문제로 추정.
-  - 추가 시도 없이 중단. Cloudflare 공식 도구 설치가 완료되어야 1단계 진행 가능.
+  - 추가 시도 없이 중단.
+- **설치 재시도 (2차 — Python 우회, 사람 인터랙티브 세션에서 성공)**:
+  - 같은 시각 다른 인터랙티브 세션에서 curl 대신 Python(`urllib.request.urlretrieve`)으로 다운로드 재시도 → **성공** (54MB, 확인됨).
+  - 내려받은 실행 파일: `C:/work/solar-bible/cloudflared.exe` (실제 접근 가능 경로에 복사됨). `file` 확인 결과: PE32+ executable for MS Windows 6.01 (console), x86-64.
+  - 버전 확인: `cloudflared.exe` 실행 → Version 2026.9.1 (Checksum 2837888cc0f5d58f15b6dc478376de90b4d3ba5241c7947455d1a00df429712).
+- **Quick Tunnel 실행 (python 다운로드 성공 후)**:
+  - `cloudflared.exe tunnel --url http://localhost:8443` 실행 → **임시 공개 HTTPS URL 확보**:
+    - 이전 세션 확보분: `https://alt-zealand-examines-baskets.trycloudflare.com`
+    - 이번 실행 재확보분(유효기간 제한, 프로세스 종료 시 소멸): `https://ordering-respond-backgrounds-communicate.trycloudflare.com`
+  - tunnel은 켜져 있는 동안만 유효. 지금은 "된다/안 된다"만 확인하는 단계라 상시 자동 실행은 이번에 안 한다(별도 발주).
 
 ### 2단계: Hermes webhook 모드 전환
 
