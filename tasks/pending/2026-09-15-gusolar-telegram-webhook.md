@@ -1,6 +1,6 @@
 ## 발주: 탐 → 구솔라
 
-status: QUEUED
+status: IN_PROGRESS
 
 받는 이: 구솔라 — 이 발주부터 먼저 처리해라(최우선)
 
@@ -63,3 +63,7 @@ Hermes Agent의 텔레그램 polling 모드에 알려진 미해결 버그가 있
 뒤 `tasks/done/2026-09-15-gusolar-telegram-webhook.md`로 옮기고 git
 add·commit·push한다. **사장님의 실제 텔레그램 응답 확인 전까지는
 "DONE=VERIFIED"라고 쓰지 마라** — "웹훅 모드 전환 완료, 검증 대기"까지만.
+
+---
+
+처리 중 (시작 00:50 UTC+9)

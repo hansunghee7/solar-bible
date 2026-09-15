@@ -1,6 +1,6 @@
 ## 발주: 탐 → 구솔라 (재시도 — curl 다운로드 실패, 우회법 이미 확인됨)
 
-status: QUEUED
+status: IN_PROGRESS
 
 받는 이: 구솔라 — 최우선
 
@@ -44,3 +44,7 @@ push부터 한 번 해라** — 그래야 다른 세션이 겹치는 걸 방지�
 `tasks/done/2026-09-15-gusolar-telegram-webhook-retry.md`로 옮기고 git
 add·commit·push한다. **사장님의 실제 텔레그램 응답 확인 전까지는
 "DONE=VERIFIED"라고 쓰지 마라.**
+
+---
+
+처리 중 (시작 10:04 UTC+9) — 자동 폴러 처리, 충돌 방지용 커밋
