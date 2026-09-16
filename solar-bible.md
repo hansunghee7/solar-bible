@@ -443,6 +443,15 @@ TASK → EXECUTE → OBSERVE → VERIFY → EVIDENCE → DONE
   질문 되풀이 같은 붕괴 징후가 보이면 계속 대화를 시도하지 말고 그 자리에서
   창을 닫고 새 세션으로 다시 시작한다. 파일에 이미 반영된 변경은 디스크에
   남아 있으니 세션을 끊어도 유실되지 않는다.
+- **헤르메스가 "자기 자신"에 대해 자유 서술로 답한 내용은 그대로 기록에
+  옮기지 않는다.** 2026-09-17, `hansunghee7.github.io` Agent OS 감사
+  작업에서 "공식 문서·--help·config 근거로만 답하라"고 명시했는데도
+  헤르메스가 존재하지 않는 명령(`hermes track`)과 실제 `config.yaml`에
+  없는 키(`kanban.auto_decompose`/`orchestrator_profile`)를 사실처럼
+  답했다(하나는 전날 다른 세션이 그대로 옮겨 적어 진행상황.md에까지
+  올라감). 헤르메스의 자기 역량 주장을 근거로 쓰려면 반드시 `hermes
+  <sub> --help`나 `config.yaml`/로그 원문을 직접 대조해서 확인한 뒤에만
+  기록한다("이론상 있다고 한다"는 §f3a9 기준 EVIDENCE가 아니다).
 
 ---
 
