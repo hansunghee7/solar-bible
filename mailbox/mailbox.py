@@ -118,7 +118,9 @@ def cmd_send(args):
     f = d / name
     header = (
         f"# {args.title}\n\n받는이: {args.to}\n보낸이: {args.sender}\n"
-        f"시각: {time.strftime('%Y-%m-%d %H:%M:%S', now)}\n긴급: {'예' if args.urgent else '아니오'}\n\n"
+        f"시각: {time.strftime('%Y-%m-%d %H:%M:%S', now)}\n긴급: {'예' if args.urgent else '아니오'}\n"
+        + (f"요청: {args.ask.strip()}\n" if args.ask else "")
+        + "\n"
     )
     f.write_text(header + body.strip() + "\n", encoding="utf-8")
     rel = str(f.relative_to(REPO)).replace("\\", "/")
@@ -150,6 +152,7 @@ def main():
     s.add_argument("--from", dest="sender", default="탐")
     s.add_argument("--body", default=None)
     s.add_argument("--urgent", action="store_true")
+    s.add_argument("--ask", default=None, help="받는 사람이 할 일 한 줄 (긴급 알림의 👉 줄에 그대로 쓰임)")
     s.set_defaults(fn=cmd_send)
     args = ap.parse_args()
     args.fn(args)

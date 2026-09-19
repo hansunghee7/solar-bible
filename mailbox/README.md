@@ -16,6 +16,8 @@
 # 보내기 (본문은 표준입력)
 echo "본문" | python mailbox/mailbox.py send 마야 "제목" --from 탐
 python mailbox/mailbox.py send 전체 "제목" --from 탐 --body "한 줄 본문"
+# 긴급 알림에는 받는 사람이 할 일을 한 줄로 적는다(텔레그램 👉 줄에 쓰임)
+python mailbox/mailbox.py send 마야 "제목" --urgent --ask "여기를 확인해 주세요" --body "본문"
 
 # 안 읽은 개수 확인 (로컬 세션은 시작 훅이 자동으로 보여 줌)
 python mailbox/mailbox.py list
