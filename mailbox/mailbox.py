@@ -5,7 +5,7 @@
   보내기 : python mailbox.py send <받는이> "<제목>" [--from 탐] [--urgent]   (본문은 표준입력 또는 --body)
   개수   : python mailbox.py list                     (안 읽은 메시지가 있을 때만 출력, 세션 시작 훅용)
   읽기   : python mailbox.py read <내 이름>             (내 우편 + 전체 공지를 읽고 읽음 표시)
-받는이: 전체, 탐, 마야, 시안, 노트, 핏, 페이브, 헤르메스
+받는이: 전체, 탐, 마야, 시안, 노트, 핏, 페이브, 헤르메스, 사장님
 이 저장소는 공개다. 비밀값(키, 토큰), 개인정보, 호스트명, IP를 쓰지 않는다.
 """
 import argparse
@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 SEEN = Path.home() / ".claude" / "mailbox_seen.json"
-PERSONAS = ["전체", "탐", "마야", "시안", "노트", "핏", "페이브", "헤르메스"]
+PERSONAS = ["전체", "탐", "마야", "시안", "노트", "핏", "페이브", "헤르메스", "사장님"]
 
 
 def git(*args, timeout=30):
