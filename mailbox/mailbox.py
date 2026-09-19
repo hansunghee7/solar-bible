@@ -105,7 +105,11 @@ def cmd_send(args):
     if args.to not in PERSONAS:
         print(f"받는이는 {', '.join(PERSONAS)} 중 하나여야 합니다.")
         sys.exit(2)
-    body = args.body if args.body is not None else sys.stdin.read()
+    if args.body is not None:
+        body = args.body
+    else:
+        # 윈도우 표준입력은 기본이 cp949라서 UTF-8 본문이 깨진다. 바이트로 읽어 직접 디코딩한다.
+        body = sys.stdin.buffer.read().decode("utf-8", errors="replace")
     now = time.localtime()
     ts = time.strftime("%Y%m%d-%H%M%S", now)
     name = f"{ts}-{args.sender}-{slug(args.title)}.md"
