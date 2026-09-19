@@ -67,7 +67,10 @@ def unread_for(reader, seen):
     return out
 
 
-def cmd_list(_):
+LAST_LIST = Path.home() / ".claude" / "mailbox_last_list.txt"
+
+
+def cmd_list(args):
     sync()
     seen = load_seen()
     parts = []
@@ -75,8 +78,19 @@ def cmd_list(_):
         n = len(unread_for(name, seen))
         if n:
             parts.append(f"{name} {n}건")
+    summary = ", ".join(parts)
+    if getattr(args, "changed", False):
+        # 프롬프트마다 실행되는 훅용: 지난번에 보여 준 내용과 달라졌을 때만 출력한다.
+        try:
+            last = LAST_LIST.read_text(encoding="utf-8")
+        except Exception:
+            last = ""
+        if summary == last:
+            return
+        LAST_LIST.parent.mkdir(parents=True, exist_ok=True)
+        LAST_LIST.write_text(summary, encoding="utf-8")
     if parts:
-        print("📬 우편함 안 읽은 메시지: " + ", ".join(parts))
+        print("📬 우편함 안 읽은 메시지: " + summary)
         print(f"   읽기: python \"{ROOT / 'mailbox.py'}\" read <내 이름>")
 
 
@@ -142,7 +156,9 @@ def cmd_send(args):
 def main():
     ap = argparse.ArgumentParser(description="에이전트 우편함")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("list").set_defaults(fn=cmd_list)
+    lp = sub.add_parser("list")
+    lp.add_argument("--changed", action="store_true", help="지난번과 달라졌을 때만 출력(프롬프트 훅용)")
+    lp.set_defaults(fn=cmd_list)
     r = sub.add_parser("read")
     r.add_argument("name")
     r.set_defaults(fn=cmd_read)
