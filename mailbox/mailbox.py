@@ -94,9 +94,34 @@ def cmd_list(args):
         print(f"   읽기: python \"{ROOT / 'mailbox.py'}\" read <내 이름>")
 
 
+def recent_for(reader, hours):
+    """최근 N시간 안에 온 메시지 전부(읽음 여부와 상관없이). 파일명 앞의 날짜-시각으로 판단한다."""
+    limit = time.time() - hours * 3600
+    out = []
+    for box in (reader, "전체"):
+        for p in files_of(box):
+            m = re.match(r"(\d{8})-(\d{6})-", p.name)
+            if not m:
+                continue
+            try:
+                ts = time.mktime(time.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S"))
+            except ValueError:
+                continue
+            if ts >= limit:
+                out.append((f"{box}/{p.name}", p))
+    return sorted(out, key=lambda kv: kv[1].name)
+
+
 def cmd_read(args):
     sync()
     seen = load_seen()
+    if args.recent is not None:
+        # 새 세션용: 다른 세션이 이미 읽음 처리했더라도 최근 메시지를 다시 보여 준다(읽음 표시는 바꾸지 않는다).
+        for key, p in recent_for(args.name, args.recent):
+            print("=" * 60)
+            print(f"[{key}]")
+            print(p.read_text(encoding="utf-8").strip())
+        return
     items = unread_for(args.name, seen)
     if not items:
         return
@@ -161,6 +186,8 @@ def main():
     lp.set_defaults(fn=cmd_list)
     r = sub.add_parser("read")
     r.add_argument("name")
+    r.add_argument("--recent", nargs="?", const=24.0, type=float, default=None,
+                   help="최근 N시간(기본 24) 메시지를 읽음 여부와 상관없이 표시. 새 세션의 아침 의식용")
     r.set_defaults(fn=cmd_read)
     s = sub.add_parser("send")
     s.add_argument("to")

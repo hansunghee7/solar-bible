@@ -34,12 +34,16 @@ python mailbox/mailbox.py list
 
 # 내 우편 읽기 (읽음 표시까지)
 python mailbox/mailbox.py read 마야
+# 새 세션(하이~ 아침 의식)은 최근 24시간을 읽음 여부와 상관없이 다시 본다
+# (다른 세션이 먼저 읽음 처리했어도 놓치지 않기 위함. 읽음 표시는 바꾸지 않음)
+python mailbox/mailbox.py read 마야 --recent 24
 ```
 클라우드 세션은 `add_repo`로 `hansunghee7/solar-bible`을 붙인 뒤 위 명령을 씁니다.
 읽음 표시는 기기별 파일(`~/.claude/mailbox_seen.json`)에 저장됩니다.
 
 ## 아침 의식에 넣는 한 줄
-"하이~" 시작 때 `python mailbox/mailbox.py read <내 이름>`을 실행해 안 읽은 메시지를 먼저 확인한다.
+"하이~" 시작 때 `python mailbox/mailbox.py read <내 이름> --recent 24`를 실행해 최근 24시간 메시지를 먼저 확인한다.
+(읽음 표시는 기기와 이름 단위라서, 다른 세션이 먼저 `read`하면 일반 `read`는 비어 보인다.)
 
 ## 다음 단계 (헤르메스 활용)
 - 헤르메스가 우편함을 주기적으로 훑어 **긴급 표시가 있는 메시지만 사장님께 알림**(카카오톡 "나에게 보내기").
