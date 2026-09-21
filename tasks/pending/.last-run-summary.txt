@@ -1,17 +1,19 @@
-실행 일시: 2026-09-21 20:48 KST
+실행 일시: 2026-09-22 01:28 KST
 저장소: C:/work/solar-bible (main, origin/main과 최신 동기화됨 — git pull 결과 Already up to date)
 hermes CLI: 사용 가능 (v0.21.3)
-gh CLI: 사용 가능, 인증 완료 (hansunghee7)
+gh CLI: 인증 완료 (hansunghee7, repo 권한 있음)
 
-솔라바이블: §1~§5, §10 확인 완료 (저장소 루트 solar-bible.md)
+솔라바이블: §1~§5, §10 확인 완료
 
 === 1. git pull ===
 origin/main 이미 최신 — 변경 없음.
 
 === 2. tasks/pending/ 확인 ===
-실제 작업 파일: 없음
+실질 작업 파일: 없음
 - .gitkeep (빈 파일)
-- .last-run-summary.txt (직전 실행 요약)
+- .last-run-summary.txt (직전 실행 요약 — 자체)
+
+tasks/done/ 현황: 총 37개 처리 완료 파일 존재 (마지막 처리: 2026-09-21)
 
 === 3. 새 작업 처리 ===
 처리 대상 파일 없음 → hermes chat 미실행.
@@ -19,8 +21,11 @@ origin/main 이미 최신 — 변경 없음.
 === 4. done 이동·커밋·push·댓글 ===
 해당 없음.
 
+=== 4.5. 이슈/PR 댓글 ===
+해당 없음 (skip).
+
 === 5. 요약 ===
-- 확인된 pending 파일: 없음
+- 확인된 pending 파일: 없음 (실질 작업 파일 기준)
 - 처리한 파일: 없음
 - 미처리 사유: 처리할 새 작업 파일 없음
 - 댓글 단계: 해당 없음 (skip)
