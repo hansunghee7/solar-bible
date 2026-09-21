@@ -1,4 +1,4 @@
-실행 일시: 2026-09-21 20:39 KST
+실행 일시: 2026-09-21 20:48 KST
 저장소: C:/work/solar-bible (main, origin/main과 최신 동기화됨 — git pull 결과 Already up to date)
 hermes CLI: 사용 가능 (v0.21.3)
 gh CLI: 사용 가능, 인증 완료 (hansunghee7)
@@ -16,9 +16,6 @@ origin/main 이미 최신 — 변경 없음.
 === 3. 새 작업 처리 ===
 처리 대상 파일 없음 → hermes chat 미실행.
 
-참고: tasks/pending-long/2026-09-21-collect-service-notices-v2.md 존재 확인됨.
-그러나 지시 범위가 tasks/pending/이므로 scope 외로 간주, 처리하지 않음.
-
 === 4. done 이동·커밋·push·댓글 ===
 해당 없음.
 
@@ -26,6 +23,5 @@ origin/main 이미 최신 — 변경 없음.
 - 확인된 pending 파일: 없음
 - 처리한 파일: 없음
 - 미처리 사유: 처리할 새 작업 파일 없음
-- pending-long 파일: 1개 확인(2026-09-21-collect-service-notices-v2.md)되었으나 scope 외 — 건드리지 않음
 - 댓글 단계: 해당 없음 (skip)
 - 결과: 처리할 작업 없음.
