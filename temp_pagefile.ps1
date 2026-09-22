@@ -1,0 +1,2 @@
+Get-CimInstance Win32_PageFileSetting | Select-Object Name, InitialSize, MaximumSize | Format-Table -AutoSize
+Get-CimInstance Win32_PageFileUsage | Select-Object Name, CurrentUsage, PeakUsage | Format-Table -AutoSize

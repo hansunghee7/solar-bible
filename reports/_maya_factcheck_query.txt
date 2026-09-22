@@ -1,0 +1,7 @@
+[TASK] 아래 5개 주장을 웹 조사로 팩트체크하고 결과를 C:\work\solar-bible\reports\2026-09-19-spec-factcheck-maya.md 에 저장하세요. 재귀 스캔 금지, 위 파일 외에는 쓰지 말고, 키·토큰·호스트명·IP는 쓰지 마세요. 공식 문서와 원 출처(Anthropic Claude Code 공식 문서, Google AI 공식 문서, Ollama/Qwen 공식 자료)를 우선하세요.
+주장1: Claude Code는 claude -p(--print) 비대화형 실행과 --permission-mode 옵션을 지원하며, permission-mode에 auto 값이 있다.
+주장2: Claude Code의 SessionStart 훅이 표준출력으로 낸 문자열은 컨텍스트에 주입된다.
+주장3: claude -p로 무인 실행할 때 --allowedTools 등으로 허용 도구를 제한할 수 있다.
+주장4: Gemini API 무료 등급에서 입력 컨텍스트 100만 토큰 창을 쓸 수 있고, 분당 토큰(TPM) 및 일일 요청(RPD) 한도가 있다. 현재 모델별 무료 등급 한도 수치를 찾을 것.
+주장5: RTX 4090에서 Ollama로 Qwen 14B급 모델은 초당 100토큰 이상을 낸다(양자화 조건 명시).
+[형식] 주장마다: 판정(확인됨/부분확인/반증/근거없음), 출처 URL, 원문 인용 15단어 이내, 확인 일시. 근거를 못 찾으면 '근거없음'이라고 쓰고 추측하지 마세요. 마지막에 STATUS: DONE 또는 FAILED. 검증 단계(제미나이 대조)는 실행하지 않았다면 '검증 단계 미실행'이라고 적으세요.
