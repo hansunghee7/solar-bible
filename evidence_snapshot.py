@@ -1,96 +1,133 @@
 #!/usr/bin/env python3
-"""evidence_snapshot.py — 보고서 작성 시점의 수집 증거 요약 출력."""
-import os, sys, json, datetime
+"""evidence_snapshot.py — 보고서 작성 세션의 실제 도구 실행 기록에서 증거를 추출한다.
 
-REPORT_PATH = "C:/work/solar-bible/reports/2026-09-20-support-grants.md"
+이전 버전은 collected_urls/failed_or_unreadable_urls를 스크립트에 직접 타이핑한
+자기신고 값이었다(백로그 30, 사장님 반려). 이 버전은 그 값을 전부 지우고,
+헤르메스 세션 저장소(SQLite, `hermes sessions export`)에서 그 보고서를 만든
+세션의 실제 tool_calls/tool 응답을 읽어 URL 목록과 성공/실패를 재구성한다.
+
+사용법:
+    python evidence_snapshot.py --session-id <ID> --report <REPORT_PATH>
+
+세션 id를 모르면 먼저 찾는다:
+    hermes sessions export --format jsonl --after <YYYY-MM-DD> --before <YYYY-MM-DD> \
+        --min-tool-calls 1 - | grep <보고서 안의 고유 URL 일부>
+"""
+import argparse
+import json
+import os
+import subprocess
+import sys
+import datetime
+
+# 실제로 URL을 여러 건 인자로 받아 웹 콘텐츠를 가져오는 도구 이름들.
+# 새 도구가 추가되면 여기에 더한다 — 하드코딩된 URL 목록 대신 도구 이름만 하드코딩한다.
+FETCH_TOOL_NAMES = {"web_extract", "web_fetch", "fetch", "browser_fetch"}
+
+
+def export_session(session_id: str) -> dict:
+    """hermes SQLite 세션 저장소에서 해당 세션 하나를 jsonl로 export해 파싱한다."""
+    proc = subprocess.run(
+        ["hermes", "sessions", "export", "--format", "jsonl",
+         "--session-id", session_id, "-"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"hermes sessions export 실패(exit {proc.returncode}): {proc.stderr[:500]}")
+    lines = [l for l in proc.stdout.splitlines() if l.strip()]
+    if not lines:
+        raise RuntimeError(f"세션 {session_id}을(를) 찾지 못함(export 결과 0줄)")
+    return json.loads(lines[0])
+
+
+def extract_tool_result_json(raw_content: str):
+    """<untrusted_tool_result ...> 래퍼가 섞인 tool 응답 문자열에서 JSON 본문만 뽑는다."""
+    idx = raw_content.find("{")
+    if idx == -1:
+        return None
+    try:
+        # raw_decode: 뒤에 </untrusted_tool_result> 같은 꼬리가 붙어 있어도
+        # 앞쪽 JSON 객체 하나만 파싱하고 나머지는 무시한다.
+        obj, _ = json.JSONDecoder().raw_decode(raw_content[idx:])
+        return obj
+    except json.JSONDecodeError:
+        return None
+
+
+def collect_evidence(session: dict) -> dict:
+    messages = session.get("messages") or []
+    by_call_id = {}
+    for m in messages:
+        if m.get("role") == "tool" and m.get("tool_call_id"):
+            by_call_id[m["tool_call_id"]] = m
+
+    collected = []
+    failed = []
+    fetch_call_count = 0
+
+    for m in messages:
+        if m.get("role") != "assistant" or not m.get("tool_calls"):
+            continue
+        for tc in m["tool_calls"]:
+            fn = (tc or {}).get("function") or {}
+            name = fn.get("name")
+            if name not in FETCH_TOOL_NAMES:
+                continue
+            fetch_call_count += 1
+            try:
+                args = json.loads(fn.get("arguments") or "{}")
+            except json.JSONDecodeError:
+                args = {}
+            requested_urls = args.get("urls") or ([args["url"]] if args.get("url") else [])
+
+            call_id = tc.get("id") or tc.get("call_id")
+            tool_msg = by_call_id.get(call_id)
+            result = extract_tool_result_json(tool_msg["content"]) if tool_msg else None
+
+            result_by_url = {}
+            if result and isinstance(result.get("results"), list):
+                for r in result["results"]:
+                    result_by_url[r.get("url")] = r
+
+            for u in requested_urls:
+                r = result_by_url.get(u)
+                if r is None:
+                    # 도구가 실패해서 응답 자체가 없거나 파싱이 안 된 경우
+                    failed.append({"url": u, "reason": "응답 파싱 실패 또는 결과 없음"})
+                elif r.get("error"):
+                    failed.append({"url": u, "reason": r["error"]})
+                else:
+                    collected.append(u)
+
+    return {
+        "fetch_tool_call_count": fetch_call_count,
+        "collected_urls": sorted(set(collected)),
+        "failed_or_unreadable_urls": failed,
+    }
+
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--session-id", required=True, help="hermes sessions export가 인식하는 세션 id")
+    ap.add_argument("--report", required=True, help="이 증거가 뒷받침하는 보고서 파일 경로")
+    args = ap.parse_args()
+
+    session = export_session(args.session_id)
+    evidence = collect_evidence(session)
+
     snapshot = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "report_path": REPORT_PATH,
-        "report_exists": os.path.exists(REPORT_PATH),
-        "report_size_bytes": os.path.getsize(REPORT_PATH) if os.path.exists(REPORT_PATH) else None,
-        "collected_urls": [
-            "https://www.kised.or.kr/menu.es?mid=a10205010000",
-            "https://www.kised.or.kr/menu.es?mid=a10205020000",
-            "https://www.kised.or.kr/menu.es?mid=a10205030000",
-            "https://www.kised.or.kr/menu.es?mid=a10302000000",
-            "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000117172",
-            "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000121151",
-            "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000122108",
-            "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000120038",
-            "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000116971",
-            "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000118886",
-            "https://www.mss.go.kr/site/smba/ex/bbs/View.do?cbIdx=86&bcIdx=1064347",
-            "https://www.mss.go.kr/site/ulsan/ex/bbs/View.do?cbIdx=254&bcIdx=1064546",
-            "https://www.venturesquare.net/announcement/1041397",
-            "https://www.nipa.kr/home/2-2/16664",
-            "https://www.nipa.kr/home/2-2/16497",
-            "https://www.nipa.kr/home/2-2/16474",
-        ],
-        "failed_or_unreadable_urls": [],
-        "evidence_sources_by_program": {
-            "예비창업패키지": [
-                "창업진흥원 사업안내 페이지 (https://www.kised.or.kr/menu.es?mid=a10205010000) — 지원대상·사업화자금·예산·사업절차"
-            ],
-            "초기창업패키지": [
-                "창업진흥원 사업안내 페이지 (https://www.kised.or.kr/menu.es?mid=a10205020000) — 지원대상·사업화자금·예산·규모·사업절차",
-                "창업도약패키지(일반형) 공고 PDF 내 일정표 — 초기창업패키지 실제 접수일 교차 확인 (2026.01.23~02.13)"
-            ],
-            "창업도약패키지(일반형)": [
-                "창업진흥원 사업안내 페이지 (https://www.kised.or.kr/menu.es?mid=a10205030000) — 지원대상·사업화자금·예산·규모·평가절차",
-                "기업마당 공고 페이지 (https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000117172) — 딥테크 특화형 공고·지원대상·사업내용",
-                "창업도약패키지(일반형) 공고 PDF (https://jb.riia.or.kr/file/download?id=b9cd3543-fd80-11f0-a9fb-334ae3222397) — 평가 지표·선정 절차·붙임3 동시수행 불가 목록·접수기간"
-            ],
-            "초격차 스타트업 프로젝트 DIPS": [
-                "중기부 보도자료 (https://www.mss.go.kr/site/smba/ex/bbs/View.do?cbIdx=86&bcIdx=1064347) — 선정규모·지원내용·6대 전략산업-12대 신산업",
-                "중기부 울산지방청 공고 (https://www.mss.go.kr/site/ulsan/ex/bbs/View.do?cbIdx=254&bcIdx=1064546) — 접수기간·첨부파일"
-            ],
-            "창업성장기술개발사업(디딤돌)": [
-                "기업마당 3차 공고 페이지 (https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000120038) — 공통자격·업력·매출액 요건",
-                "TLO 공고 페이지 (https://tlo.korea.ac.kr/support-projects/2702) — 접수기간·규모·예산·세부과제 교차 확인"
-            ],
-            "글로벌기업 협업프로그램 (AroundX)": [
-                "벤처스퀘어 공고 페이지 (https://www.venturesquare.net/announcement/1041397) — 접수기간·지원내용·사업화자금·협업 글로벌 기업 18개 목록·신청대상",
-                "경기도잡아바 (https://job.gg.go.kr/entSprt/detail.do?seq=3188) — 모집일정 교차 확인"
-            ],
-            "AI 통합 바우처 (클라우드 바우처)": [
-                "NIPA 공고 페이지 (https://www.nipa.kr/home/2-2/16664) — 신청자격·접수기간·자기부담 구조·지원규모·예산·문의처"
-            ],
-            "SaaS 개발환경 지원 (SaaS 전환지원센터)": [
-                "NIPA 공고 페이지 (https://www.nipa.kr/home/2-2/16497) — 사업목적·대상·접수기간·공급기업 선정규모·신청방법",
-                "Poliflo (https://poliflo.com/announcements/2645) — 수요기업 접수기간 교차 확인",
-                "KOIPA 공고문 — 사업기간 교차 확인"
-            ],
-            "2026년 K-스타트업 AI리그": [
-                "기업마당 공고 페이지 (https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000121151) — 신청대상·자격·AI 全 기술영역",
-                "벤처스퀘어 공고 페이지 (https://www.venturesquare.net/announcement/1069076) — 접수기간 교차 확인"
-            ],
-            "창업패키지 (AI 인재 실증형)": [
-                "기업마당 공고 페이지 (https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000122108) — 지원대상·지원내용·딥테크 5대 분야"
-            ],
-            "TIPS (팁스)": [
-                "창업진흥원 사업공고 페이지 (https://www.kised.or.kr/menu.es?mid=a10302000000) — 2026년 팁스 수정공고·마감일자 2026-12-31"
-            ],
-            "창업중심대학": [
-                "창업진흥원 사업공고 페이지 (https://www.kised.or.kr/menu.es?mid=a10302000000) — 사업 목록 확인"
-            ],
-        },
-        "claims_count_estimate": 60,
-        "unanswered_or_partially_answered": [
-            "예비창업패키지 2026년 실제 접수일(공고 페이지에는 '2~3월 예정'만 기재, 실제 3.06~03.24는 공식 공고문 PDF 미열람 → 미확정)",
-            "초기·예비·창업도약 패키지의 자기부담금 비율(공식 사업안내 페이지에 미기재, 중기부 블로그에서 자부담률 30%→우대 10~25% 언급되나 공식 공고문 확인 필요 → 미확정)",
-            "창업도약패키지 평가 배점 비중(공고 PDF에 평가항목 목록은 있으나 배점 수치는 미기재 → 미확정)",
-            "창업중심대학 2026년 실제 접수일(2월 공고 예정이라는 블로그 정보만, 공식 공고 미열람 → 미확정)",
-            "초격차 DIPS '창업 10년 이내' 요건(중기부 보도자료에서 직접 확인되지 않고 제3자 재인용으로만 존재 → 미확정)",
-            "디딤돌 1차·2차 실제 접수일(기업마당 페이지에 일자 미기재, PDF 미다운로드 → 미확정)",
-            "창업패키지(AI 인재 실증형) 접수기간(기업마당 페이지에 일자 미기재, 공고문 PDF 미열람 → 미확정)",
-            "글로벌기업 협업프로그램 자기부담금·중복수혜 제한(공고 본문에 있으나 본 추출에서 미확인 → 미확정)",
-            "2027년 모든 사업 일정은 전년도 공고 패턴 기준 추정치이며, 당해연도 공식 공고 미확인 → 추정 층위",
-        ],
+        "session_id": args.session_id,
+        "session_started_at": session.get("started_at"),
+        "session_tool_call_count_total": session.get("tool_call_count"),
+        "report_path": args.report,
+        "report_exists": os.path.exists(args.report),
+        "report_size_bytes": os.path.getsize(args.report) if os.path.exists(args.report) else None,
+        **evidence,
     }
     print(json.dumps(snapshot, ensure_ascii=False, indent=2))
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
