@@ -116,11 +116,16 @@ def cmd_read(args):
     sync()
     seen = load_seen()
     if args.recent is not None:
-        # 새 세션용: 다른 세션이 이미 읽음 처리했더라도 최근 메시지를 다시 보여 준다(읽음 표시는 바꾸지 않는다).
+        # 새 세션용: 다른 세션이 이미 읽음 처리했더라도 최근 메시지를 다시 보여 준다.
+        # 2026-09-25 탐(사장님 승인): 보여 준 것은 읽음 표시도 한다. 안 하면 안 읽은 개수가 계속 쌓여(탐 62건) 새 일이 와도 티가 안 났다.
+        keys = set(seen.get(args.name, []))
         for key, p in recent_for(args.name, args.recent):
             print("=" * 60)
             print(f"[{key}]")
             print(p.read_text(encoding="utf-8").strip())
+            keys.add(key)
+        seen[args.name] = sorted(keys)
+        save_seen(seen)
         return
     items = unread_for(args.name, seen)
     if not items:
