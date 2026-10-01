@@ -183,6 +183,35 @@ def cmd_send(args):
     sys.exit(1)
 
 
+def cmd_audit(args):
+    """감사용 적체 집계. 읽음 표시(기기별 파일)를 쓰지 않고 파일명 날짜만 본다.
+    클라우드 세션은 읽음 표시가 없어 list가 전체 파일 수를 '미확인'으로 세므로(2026-09-30 탐 215건 오탐),
+    감사는 이 명령의 '최근 N일' 건수로 판단한다."""
+    sync()
+    limit = time.time() - args.days * 86400
+    rows = []
+    for name in PERSONAS[1:]:
+        n = auto = 0
+        for p in files_of(name):
+            m = re.match(r"(\d{8})-(\d{6})-", p.name)
+            if not m:
+                continue
+            try:
+                ts = time.mktime(time.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S"))
+            except ValueError:
+                continue
+            if ts >= limit:
+                if "-감시-" in p.name:
+                    auto += 1  # 자동 감시 알림은 사람이 처리할 일이 아니라 적체에서 뺀다
+                else:
+                    n += 1
+        rows.append((name, n, auto, len(files_of(name))))
+    for name, n, auto, total in rows:
+        flag = " ⚠️ 적체" if n >= args.warn else ""
+        print(f"{name}: 최근 {args.days}일 {n}건 (자동 감시 알림 {auto}건 제외, 파일 총 {total}건){flag}")
+    print(f"기준: 최근 {args.days}일 {args.warn}건 이상이면 적체(자동 감시 알림 제외). 파일 총 건수는 참고용이며 적체 판정에 쓰지 않는다.")
+
+
 def main():
     ap = argparse.ArgumentParser(description="에이전트 우편함")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -194,6 +223,10 @@ def main():
     r.add_argument("--recent", nargs="?", const=24.0, type=float, default=None,
                    help="최근 N시간(기본 24) 메시지를 읽음 여부와 상관없이 표시. 새 세션의 아침 의식용")
     r.set_defaults(fn=cmd_read)
+    a = sub.add_parser("audit")
+    a.add_argument("--days", type=int, default=7)
+    a.add_argument("--warn", type=int, default=30)
+    a.set_defaults(fn=cmd_audit)
     s = sub.add_parser("send")
     s.add_argument("to")
     s.add_argument("title")
