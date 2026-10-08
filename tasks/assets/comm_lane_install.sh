@@ -9,6 +9,8 @@ ENVF="$HOME/.config/comm-lane/env"
 echo "== 1. 폴러 감시 cron"
 LINE="*/5 * * * * cd $PUB && bash tasks/assets/pending_watchdog.sh $PUB 600 >> \$HOME/.pending_watchdog.log 2>&1"
 if crontab -l 2>/dev/null | grep -q pending_watchdog; then echo "이미 등록됨"; else (crontab -l 2>/dev/null; echo "$LINE") | crontab - && echo "등록함"; fi
+LINE2="*/5 * * * * cd $PUB && bash tasks/assets/pending_reaper.sh $PUB 600 >> \$HOME/.pending_reaper.log 2>&1"
+if crontab -l 2>/dev/null | grep -q pending_reaper; then echo "reaper 이미 등록됨"; else (crontab -l 2>/dev/null; echo "$LINE2") | crontab - && echo "reaper 등록함"; fi
 echo "== 2. 텔레그램 답장 접수"
 if [ ! -f "$ENVF" ]; then echo "건너뜀: 환경 파일 없음($ENVF). 봇 확인 후 사람이 TG_BOT_TOKEN, TG_ALLOWED_CHAT_ID를 넣어야 한다"
 elif ! grep -q '^TG_BOT_TOKEN=' "$ENVF" || ! grep -q '^TG_ALLOWED_CHAT_ID=' "$ENVF"; then echo "건너뜀: 환경 파일에 필요한 항목이 없음(값은 출력하지 않는다)"
