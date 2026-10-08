@@ -1,0 +1,111 @@
+[검색 없음: 구글 검색 연동 불가, 모델 지식으로만 답함]
+
+## Q1
+
+**1. 폴링 없이 외부 이벤트를 수신하는 공식 지원 현황**
+* **Claude Code의 인바운드 웹훅/이벤트 수신 엔드포인트**: **확인 불가 (공식 지원 없음)**. Claude Code는 대화형 터미널 인터페이스(CLI) 기반 에이전트로 시작되었으며, 원격 웹/클라우드 세션 환경에서도 외부 공개 HTTP 엔드포인트를 열어 직접 웹훅을 수신하는 기능은 공식 제공되지 않습니다.
+* **GitHub 활동 구독**: GitHub 이벤트(이슈, PR 등)를 Claude Code 인스턴스로 직접 푸시(Push)해 주는 공식 네이티브 연동은 제공되지 않으며, GitHub Actions 러너 내에서 CLI 형태로 호출하거나 GitHub Webhook을 중계 인프라(Cloudflare Workers 등)에서 받아 Claude API/SDK를 호출하는 방식으로 우회해야 합니다.
+* **예약 작업(루틴) API 트리거**: Claude Code 세션 자체를 외부 API로 깨우는 전용 예약 트리거 API는 제공되지 않습니다. 대신 Anthropic Messages API를 외부 크론(Cloud Scheduler 등)에서 직접 호출하여 처리합니다.
+
+**2. 인증 및 제한 사항**
+* **API 호출 인증**: Claude 세션/API를 호출하려면 `x-api-key` 헤더를 통한 Anthropic API Key 인증 또는 Google Cloud Vertex AI / AWS Bedrock IAM 자격 증명이 필수입니다.
+* **서명 검증**: Claude Code 자체는 웹훅 수신기가 없으므로 GitHub의 `X-Hub-Signature-256`이나 외부 서명을 자체 검증하는 계층이 없습니다. 서명 검증은 반드시 앞단의 프록시/서버리스 레이어에서 수행해야 합니다.
+
+* **출처:**
+  * Claude Code 공식 문서: https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview
+  * Anthropic API 레퍼런스: https://docs.anthropic.com/en/api/getting-started
+
+---
+
+## Q2
+
+**1. Tally JSON 페이로드의 GitHub API 직접 전송 가능 여부**
+* **직접 전송 불가**: 
+  * Tally 웹훅 본문은 `{ "eventId": "...", "eventType": "FORM_RESPONSE", "data": { "fields": [...] } }` 구조입니다.
+  * GitHub의 `repository_dispatch` API는 반드시 `{"event_type": "...", "client_payload": {...}}` 스키마를 요구하며, 이슈/PR 댓글 API는 `{"body": "..."}` 스키마를 요구합니다.
+  * Tally는 요청 바디를 GitHub 스키마로 매핑/재구성하는 기능을 제공하지 않으므로, 중간에 페이로드를 가공하는 브릿지(FaaS 등)가 반드시 필요합니다.
+
+**2. 변환 브릿지 옵션 비교 (가장 가볍고 저렴한 순)**
+
+| 비교 항목 | Cloudflare Workers (추천) | GCP Cloud Functions / Cloud Run | GitHub Actions (`repository_dispatch`) |
+| :--- | :--- | :--- | :--- |
+| **비용** | **무료 티어 하루 10만 건** (1인 규모 사실상 $0) | 월 200만 건 무료 티어이나, 아티팩트/네트워크 등 미세 과금 가능 | 공개 저장소 무료, 비공개 저장소 계정당 월 2,000분 제한 |
+| **콜드 스타트** | **0~5ms (V8 Isolate)** | Cloud Functions: 200ms~1s, Cloud Run: 1~3s | **수 초 ~ 수십 초 (VM 프로비저닝 지연)** |
+| **서명 검증** | Web Crypto API를 통한 HMAC-SHA256 검증 간단 구현 | Node.js/Python 런타임에서 손쉽게 구현 | Actions 워크플로 스크립트에서 검증 시 지연 및 구조 복잡 |
+| **적합성** | **가장 가볍고 저렴하며 웹훅 처리에 최적** | GCP 중심 인프라가 이미 구축된 경우 적합 | 실시간 웹훅 브릿지로는 너무 무겁고 느림 |
+
+**3. Tally 웹훅 사양 요약**
+* **서명 검증 헤더**: `tally-signature` 헤더로 HMAC-SHA256 서명값(Base64 인코딩) 전달.
+* **사용자 지정 헤더**: 웹훅 설정 UI에서 커스텀 HTTP 헤더(예: `Authorization: Bearer <TOKEN>`) 추가 가능.
+* **재시도 정책**: 응답 코드가 2xx가 아닐 경우 지수 백오프(Exponential Backoff)로 최대 24시간 동안 재시도.
+
+* **출처:**
+  * Tally 웹훅 가이드: https://tally.so/help/webhooks
+  * GitHub repository_dispatch API: https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
+  * Cloudflare Workers 요금: https://developers.cloudflare.com/workers/platform/pricing/
+
+---
+
+## Q3
+
+**1. 같은 계정 및 GitHub App 봇의 댓글 알림 여부**
+* **동일 사용자 계정(Self-generated Events)**: GitHub 웹훅은 이벤트를 발생시킨 행위자(`sender`)에 관계없이 발생합니다. 즉, 웹훅 엔드포인트는 토큰 소유자 본인이 단 댓글 이벤트(`issue_comment.created`)도 수신합니다. 수신 측에서 `payload.sender.login === BOT_USERNAME` 조건을 통해 수동 필터링하지 않으면 무한 루프(자가 댓글 생성 반복)가 발생합니다.
+* **GitHub App 봇 댓글**: GitHub App이 설치된 리포지토리라면, 다른 봇이나 동일 GitHub App이 생성한 댓글 이벤트도 정상 발행됩니다. 봇 댓글은 `sender.type === "Bot"`으로 전달됩니다.
+
+**2. 자기 댓글 자동 필터링 여부**
+* **제공되지 않음**: GitHub 웹훅 레벨에서 "자신이 작성한 이벤트는 제외하고 전송"하는 서버 측 필터링 옵션은 없습니다. 웹훅 컨슈머(수신 코드)에서 `sender.login` 또는 `sender.id`를 검사하여 조기 리턴(Early Exit)해야 합니다.
+
+**3. 비공개 저장소(Private Repo) 지원 여부**
+* **완전 지원**: 비공개 저장소에서도 동일하게 웹훅 및 GitHub App 이벤트 구독이 가능합니다. 단, 에이전트/인증 토큰이 해당 비공개 저장소에 대한 접근 권한(`pull_requests: read`, `issues: read` 등)을 보유해야 합니다.
+
+* **출처:**
+  * GitHub 웹훅 이벤트 및 페이로드: https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
+  * GitHub App 권한: https://docs.github.com/en/apps/creating-github-apps/setting-up-a-github-app/differences-between-github-apps-and-personal-access-tokens
+
+---
+
+## Q4
+
+방화벽/NAT 내부의 Windows PC에서 인바운드 포트 개방 없이(Outbound 연결 유지 방식) 이벤트를 즉각 수신하는 방법 비교:
+
+| 방식 | 프로토콜 / 동작 원리 | 복잡도 및 1인 적합도 | 레이턴시 및 신뢰성 |
+| :--- | :--- | :--- | :--- |
+| **GCP Pub/Sub StreamingPull** *(추천)* | gRPC 양방향 스트리밍 단일 Outbound 연결 (443 포트) 유지 | **중간**: SDK(`@google-cloud/pubsub` 등) 10줄 이내로 구현 가능 | **즉각 수신 (<100ms)**, 자동 재연결 및 메시지 수신 확인(Ack) 내장으로 유실 없음 |
+| **Server-Sent Events (SSE)** | HTTP(S) 장기 연결(Long-lived)로 서버→클라이언트 단방향 스트림 | **가장 단순**: 브라우저나 단순 HTTP 클라이언트로 구현 가능 | 즉각 수신, 브릿지 서버(Cloudflare Worker + Durable Objects 등) 직접 구성 필요 |
+| **WebSocket** | HTTP 업그레이드 후 전이중(Full-duplex) TCP 통신 | **중간~높음**: 양방향 세션 관리, Heartbeat/Ping-Pong 처리 필요 | 즉각 수신, 양방향 통신이 불필요한 이벤트 트리거용으로는 오버엔지니어링 |
+| **GitHub 알림 (Notifications API)** | REST API 폴링 (ETag 사용 여부 불문) | **단순함**: 구현은 쉬우나 푸시가 아닌 **폴링** | **부적합**: 즉시성 보장 불가, Rate Limit(시간당 5,000회) 소진 위험 |
+
+**결론**: 외부 웹훅(Tally 등)을 Cloudflare Worker나 Cloud Run에서 받아 GCP Pub/Sub 토픽으로 발행하고, Windows PC 로컬 세션에서는 공식 SDK의 **`StreamingPull`**을 실행해 두는 것이 방화벽 우회, 재연결 안정성, 메시지 무유실 보장 측면에서 가장 단순하고 신뢰성이 높습니다.
+
+* **출처:**
+  * GCP Pub/Sub StreamingPull: https://cloud.google.com/pubsub/docs/pull#streamingpull
+
+---
+
+## Q5
+
+1인 개발/소규모 운영에서 유지보수 부담을 최소화하면서 신뢰성을 확보하는 핵심 모범 사례:
+
+**1. 중복 제거 (Idempotency)**
+* **구현 방식**: 분산 락/Redis 없이 경량 키-값 저장소(Cloudflare KV 또는 로컬 SQLite)에 `event_id`(Tally의 `eventId`, GitHub의 `X-GitHub-Delivery`)를 키로 저장(TTL 24시간 설정).
+* **동작**: 수신 즉시 해당 키가 존재하는지 조회하여, 이미 존재하면 파이프라인 처리를 건너뛰고 바로 `HTTP 200 OK`를 응답.
+
+**2. 빠른 응답과 비동기 처리 (재시도 루프 방지)**
+* Tally나 GitHub은 5~10초 이내에 2xx 응답을 받지 못하면 실패로 간주하고 백오프 재시도를 시작합니다.
+* 웹훅 수신기는 서명 검증과 중복 검사만 마친 후 즉시 `200 OK`(또는 `202 Accepted`)를 반환하고, 실제 무거운 작업(Claude 세션 트리거, GitHub 댓글 작성)은 비동기 큐/백그라운드 태스크로 분리해야 불필요한 중복 재시도를 방지할 수 있습니다.
+
+**3. HMAC-SHA256 서명 검증 (보안)**
+* 타이밍 공격(Timing Attack) 방지를 위해 문자열 단순 비교(`===`) 대신 상수 시간 비교(Constant-time comparison, 예: Node.js의 `crypto.timingSafeEqual`)를 사용합니다.
+* 서명 검증 시 원시 요청 본문(Raw Buffer/String)을 파싱하기 전에 검증해야 합니다. (JSON 파싱 후 재직렬화 시 공백/순서 차이로 서명 불일치 발생).
+
+**4. 개인정보(PII) 최소화**
+* 폼 입력 내용 중 민감 정보(이메일, 이름, 연락처 등)는 알림 메시지 본문이나 로그에 원문 그대로 남기지 않습니다.
+* GitHub 이슈 댓글 등에 노출할 때는 마스킹 처리하거나, 고유 식별 레퍼런스 ID만 포함하여 로컬 환경에서만 복호화/매핑하도록 구성합니다.
+
+* **출처:**
+  * GitHub 웹훅 보안 모범 사례: https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks
+  * Tally 웹훅 서명 검증 예제: https://tally.so/help/webhooks#verifying-webhooks
+
+출처:
+
+(API 1회, 경로 free-nosearch, 질문 5개, 토큰 None)

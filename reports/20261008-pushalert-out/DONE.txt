@@ -1,0 +1,11 @@
+research rc=0 bytes=10088
+card bytes=13240
+bt rc=0 bytes=3124
+dex rc=3 bytes=0
+finished 2026-10-08 13:16:50
+start 2026-10-08 13:40:31
+research skip(이미 있음) bytes=10088
+card bytes=13668
+bt skip bytes=3124
+dex rc=3 bytes=0
+finished 2026-10-08 13:40:32
