@@ -3,6 +3,8 @@
 # 폴링 없이 알게 된다. 댓글 작성자가 github-actions[bot]이라 사람 계정(사장님)과 달라 "내 댓글은 알림이 안 온다" 문제를 피한다(실측 3~15초).
 # 공개 저장소이므로 댓글에는 파일 경로와 커밋 제목만 쓴다(본문·비밀값·개인정보 없음).
 # 2026-10-08 추가: mailbox/탐/** (핏·타미가 탐에게 보내는 우편 회신도 푸시로 받는다).
+# 2026-10-08 수정: 타미가 커밋 여러 개를 한 번에 push하면 push 이벤트는 1건이라 마지막 커밋의 파일만 알림에 담겨 나머지 결과를 놓쳤다.
+#   push 전후(before..sha)를 비교해 모든 파일과 커밋 수를 담는다.
 name: notify-inbox
 on:
   push:
@@ -25,12 +27,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          BEFORE: ${{ github.event.before }}
         run: |
           set -eu
           pr=$(gh pr list --repo "$REPO" --state open --search "[수신함] in:title" --json number --jq '.[0].number')
           if [ -z "$pr" ]; then echo "수신함 PR 없음"; exit 0; fi
-          title=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message | split("\n")[0]')
-          files=$(gh api "repos/$REPO/commits/$SHA" --jq '[.files[].filename] | map(select(test("^(tasks/received|tasks/done|reports/.*-result\\.md|notify|mailbox/탐)"))) | join(", ")')
+          pat='^(tasks/received|tasks/done|reports/.*-result\.md|notify|mailbox/탐)'
+          if [ "${BEFORE#0000000}" != "$BEFORE" ] || ! gh api "repos/$REPO/compare/$BEFORE...$SHA" >/dev/null 2>&1; then
+            title=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message | split("\n")[0]')
+            files=$(gh api "repos/$REPO/commits/$SHA" --jq '[.files[].filename] | map(select(test("'"$pat"'"))) | join(", ")')
+            n=1
+          else
+            cmp=$(gh api "repos/$REPO/compare/$BEFORE...$SHA")
+            n=$(echo "$cmp" | jq '.commits | length')
+            title=$(echo "$cmp" | jq -r '.commits[-1].commit.message | split("\n")[0]')
+            files=$(echo "$cmp" | jq -r --arg p "$pat" '[.files[].filename] | map(select(test($p))) | unique | join(", ")')
+          fi
           now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          gh pr comment "$pr" --repo "$REPO" --body "[알림] ${now} 커밋 ${SHA:0:7}: ${title}
+          gh pr comment "$pr" --repo "$REPO" --body "[알림] ${now} 커밋 ${n}개 (마지막 ${SHA:0:7}): ${title}
           파일: ${files}"
