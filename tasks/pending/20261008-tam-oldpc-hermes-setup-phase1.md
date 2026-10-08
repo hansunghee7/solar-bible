@@ -5,7 +5,7 @@
 성격: 구PC에 헤르메스 CLI를 새로 설치하고, 신PC 타미 줄과 섞이지 않는 별도 프로필 1개를 만든다. 클로드 크레딧은 쓰지 않는다(스크립트, 타미, 무료 풀만).
 
 ## 점검으로 확인된 현재 상태 (로컬 탐, ssh 읽기 전용, 2026-10-08)
-- 구PC(goosolar)는 Linux 7.0, RAM 15GB 중 약 3GB 여유, 디스크 77GB 여유, GPU 없음(nvidia-smi 없음). 무거운 로컬 모델은 올리지 않는다.
+- 구PC(goosolar)는 Linux 7.0, RAM 15GB 중 약 3GB 여유. 정정(사장님 지적 10/8): GPU는 있다. lspci 기준 GeForce GTX 650(GK107, 구형 Kepler, VRAM 약 1GB)이고 NVIDIA 드라이버는 로드되지 않았다(nvidia-smi 없음). 현재 보이는 디스크는 Samsung SSD 840 111.8GB 한 개(루트 77GB 여유)뿐이고, 사장님 말씀의 SSD 2개·하드 2개 중 나머지는 이 리눅스에서 아직 인식·마운트되지 않았다. 구형 GPU와 1GB VRAM이라 큰 로컬 모델은 올리지 않는다. 타미는 `lsblk`와 `lspci` 원본 출력을 보고서에 붙여 디스크·GPU 구성을 확정한다.
 - `hermes` 명령은 없다. 기존에 `~/hermes-agent/telegram_agent.py`(자체 파이썬 봇)가 상시 실행 중이니 건드리지 않는다.
 - 신PC 헤르메스는 v0.21.3(포크 +1081 커밋)이며 설치 경로는 `C:\Users\PC\AppData\Local\hermes\hermes-agent`다. 구PC에는 같은 포크가 아니라 설치 가능한 공식 방식 또는 신PC 사본을 쓴다. 어느 쪽인지는 타미가 근거와 함께 고른다.
 - 감시와 정리 크론(`pending_watchdog`, `pending_reaper`)은 이미 구PC에서 도는 중이다. 건드리지 않는다.
