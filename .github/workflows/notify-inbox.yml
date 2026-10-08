@@ -1,7 +1,8 @@
 # 클라우드 탐 알림 푸시(2026-10-08 탐 클라우드). 타미(헤르메스)가 수신 문서·완료 문서·결과 문서를 main에 올리면,
 # 이 워크플로가 "[수신함]" 제목의 열린 PR에 댓글을 단다. 클라우드 세션이 그 PR을 구독하고 있으면 댓글이 wake 이벤트로 들어와
-# 폴링 없이 알게 된다. 댓글 작성자가 github-actions[bot]이라 사람 계정(사장님)과 달라 "내 댓글은 알림이 안 온다" 문제를 피하는지 시험 중이다.
+# 폴링 없이 알게 된다. 댓글 작성자가 github-actions[bot]이라 사람 계정(사장님)과 달라 "내 댓글은 알림이 안 온다" 문제를 피한다(실측 3~15초).
 # 공개 저장소이므로 댓글에는 파일 경로와 커밋 제목만 쓴다(본문·비밀값·개인정보 없음).
+# 2026-10-08 추가: mailbox/탐/** (핏·타미가 탐에게 보내는 우편 회신도 푸시로 받는다).
 name: notify-inbox
 on:
   push:
@@ -11,6 +12,7 @@ on:
       - 'tasks/done/**'
       - 'reports/*-result.md'
       - 'notify/**'
+      - 'mailbox/탐/**'
 permissions:
   contents: read
   pull-requests: write
@@ -28,7 +30,7 @@ jobs:
           pr=$(gh pr list --repo "$REPO" --state open --search "[수신함] in:title" --json number --jq '.[0].number')
           if [ -z "$pr" ]; then echo "수신함 PR 없음"; exit 0; fi
           title=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message | split("\n")[0]')
-          files=$(gh api "repos/$REPO/commits/$SHA" --jq '[.files[].filename] | map(select(test("^(tasks/received|tasks/done|reports/.*-result\\.md|notify)"))) | join(", ")')
+          files=$(gh api "repos/$REPO/commits/$SHA" --jq '[.files[].filename] | map(select(test("^(tasks/received|tasks/done|reports/.*-result\\.md|notify|mailbox/탐)"))) | join(", ")')
           now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           gh pr comment "$pr" --repo "$REPO" --body "[알림] ${now} 커밋 ${SHA:0:7}: ${title}
           파일: ${files}"
