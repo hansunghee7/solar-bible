@@ -1,31 +1,32 @@
-## 1. 설계안의 결함·위험
+## 검토 결과
 
-- **GitHub 알림 경로가 작성자에 따라 달라질 수 있습니다.** 직접 실측에서 사람 댓글은 11분 내 미도착, 봇 댓글은 12초 만에 도착했습니다. 표본은 각 1건이고 공식 문서로 세션의 필터 규칙을 확인하지 못했으므로, 사람 계정 댓글을 깨우는 경로로 기대하면 안 됩니다. [실측 기록은 질문에 제공됨]
-- **제출 내용이 저장소에 남습니다.** 응답에 개인정보나 민감한 내용이 있다면 저장소 접근 권한, PR 공개 범위, 로그와 Actions 아티팩트 노출까지 고려해야 합니다.
-- **중복 제거는 영속적이고 원자적이어야 합니다.** 메모리만 쓰거나 “확인 후 기록”이 원자적이지 않으면 재시도·동시 전달 때 중복 처리가 가능합니다. Tally는 2xx 응답을 10초 안에 받지 못하면 재시도합니다. [Tally 웹훅 문서](https://tally.so/help/webhooks)
-- **봇 댓글 생성 방식에 따라 후속 워크플로가 안 돌 수 있습니다.** GitHub의 `GITHUB_[민감어 줄임] 발생시킨 대부분의 이벤트는 새 Actions 실행을 만들지 않습니다. 다만 `repository_dispatch` 등 예외가 있으므로, 실제 토큰과 트리거 조합을 확인해야 합니다. [GitHub Actions 트리거 문서](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
-- **알림 성공과 데이터 보존을 분리해야 합니다.** 댓글은 wake 신호이면서 정본 기록이므로, 댓글 게시 실패·API 제한·워크플로 지연 때 제출 내용이 별도 저장 없이 사라질 수 있습니다. 영구 기록을 먼저 남기고 알림은 재시도 가능한 단계로 두는 편이 안전합니다.
+### 1. 설계안의 결함이나 놓친 위험 — 5개 이내
 
-## 2. 더 단순하거나 싼 대안
+- **최초 수신기와 정본 저장소 사이의 실패 구간**: 함수가 GitHub API 호출 전에 2xx를 보내면 그 사이 장애에서 이벤트가 사라질 수 있습니다. 정본 기록이 성공한 뒤 응답하고, Tally의 재시도를 중복 제거로 흡수해야 합니다. Tally는 2xx 응답이 10초 안에 오지 않으면 재시도합니다. [Tally 웹훅 문서](https://tally.so/help/webhooks)
+- **PR 댓글은 개인정보 유출 경로가 될 수 있음**: 응답 전문을 댓글이나 Actions 로그에 남기면 저장소 접근자와 로그 열람자에게 노출됩니다. 댓글에는 제출 ID와 최소한의 알림만 두고, 응답 원문은 별도 권한 경계에 보관하는 편이 안전합니다. [GitHub Actions 로그 보안 문서](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions)
+- **댓글 이벤트가 지속적인 수신 보장을 뜻하지는 않음**: 실측상 봇 댓글은 빨랐지만, PR 구독의 이벤트 종류·지연·보관·재전달 보장은 확인되지 않았습니다. 봇 댓글이 안 오거나 구독이 끊긴 경우를 확인할 정본과 재처리 경로가 필요합니다. (제품 동작은 확인 불가)
+- **중복 제거는 동시 재시도에도 안전해야 함**: 같은 제출의 요청이 동시에 도착해도 한 번만 처리되도록 원자적으로 기록해야 합니다. TTL을 짧게 잡으면 늦은 재시도에서 다시 처리될 수 있습니다.
+- **댓글 쓰기 자격 증명과 비용**: 변환 함수에는 저장소 쓰기 토큰이 필요하고, 저장소 소유권·권한 범위·회전이 추가 운영 요소입니다. GCP 무료 크레딧으로 비용이 낮을 수는 있지만, 실제 비용은 함수 실행량·로그·네트워크·Actions 사용 조건을 확인해야 합니다. [GitHub repository_dispatch 권한 요건](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)
 
-규모가 작고 **클라우드 세션의 GitHub wake가 검증된다면**, GCP 인프라를 더 얹기보다 GitHub에 제출 이벤트 파일을 기록하고 Actions가 봇 댓글을 남기는 경로가 가장 단순합니다. 단, 응답 내용을 저장소에 둘 수 있어야 하고 60초 기준은 실험으로 확인해야 합니다.
+### 2. 더 단순하거나 싼 대안, Tally에서 GitHub로 직접 보내기
 
-Tally에서 GitHub로 **변환 함수 없이 직접 보내는 경로는 확인하지 못했습니다.** Tally는 사용자 지정 헤더를 지원하지만, GitHub `repository_dispatch`는 `event_type`과 `client_payload`를 요구하고 댓글 생성 API는 `body`를 요구합니다. Tally가 이 요청 본문으로 변환해 보낸다는 공식 기능은 확인 불가입니다. [Tally 웹훅](https://tally.so/help/webhooks) · [GitHub dispatch](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) · [댓글 생성](https://docs.github.com/en/rest/issues/comments#create-an-issue-comment)
+- **추천 대안은 Cloud Run/Functions 수신기 하나가 검증 후 Pub/Sub에 적재하고, 워크플로가 처리하는 구성**입니다. GCP를 이미 쓴다면 외부 서비스 수와 운영 경계를 줄일 수 있고, Pub/Sub는 재전달·ack를 제공합니다. 다만 중복 처리는 여전히 필요합니다. [Pub/Sub StreamingPull](https://cloud.google.com/pubsub/docs/pull#streamingpull)
+- **Tally → GitHub 이벤트 직접 전송은 현재 사양상 어려워 보입니다.** Tally는 고정 페이로드를 보내고 헤더 설정은 지원하지만 본문 재구성 기능은 문서에서 확인하지 못했습니다. GitHub `repository_dispatch`는 `event_type`과 `client_payload` 구조를 요구합니다. 따라서 변환기 없이 보내는 방법은 **확인 불가**이며, 직접 호환된다는 근거는 찾지 못했습니다. [Tally 웹훅 문서](https://tally.so/help/webhooks), [GitHub API](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)
+- **GitHub에 기록을 남기는 것이 필수라면**, 수신기가 `repository_dispatch`를 호출하게 하는 쪽이 파일 push보다 단순할 수 있습니다. 다만 워크플로가 PR 댓글을 쓰고 PR 이벤트가 세션을 깨운다는 연결은 별도로 검증해야 합니다. [GitHub Actions 이벤트 문서](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#repository_dispatch)
 
-## 3. 푸시 실험 프로토콜의 허점
+### 3. 푸시 실험 프로토콜의 허점
 
-- 10건 연속 무누락은 신뢰성 근거로 약합니다. 독립 시행을 가정해도 10건 무실패의 실패율 95% 상한은 대략 26%입니다. 우선 30건 이상으로 늘리고, 0건 누락이어도 강한 보증이 아님을 기록하세요.
-- 쉬는 중·작업 중·종료 후를 따로 집계해야 합니다. 종료 후 발견은 “세션 깨우기”가 아니라 다음 시작 때 복구되는지의 측정이므로, 별도 결과로 보고 T1 정의도 다음 세션이 실제 읽은 시각으로 정하세요.
-- 사람이 제출을 알리지 않는 것 외에도 조회 도구, 백그라운드 스크립트, 세션의 자체 GitHub 활동이 측정을 오염시킬 수 있습니다. T0/T1의 기준 시계와 알림 확인 시점을 고정하고, 제출 ID·중복 전달·서명 거부 결과를 각각 기록하세요.
+- 1건씩의 봇/사람 댓글 비교로 발신자 필터링을 확정할 수 없습니다. 실험 중에는 세션의 깨어남뿐 아니라 **알림 시각·이벤트 발신자·이벤트 종류·워크플로 실행·댓글 ID**를 함께 기록해야 원인을 구분할 수 있습니다.
+- **10건 연속 무누락은 초기 동작 확인에는 유용하지만, 낮은 실패율을 입증하진 못합니다.** 예를 들어 10회 모두 성공해도 실제 누락률이 낮다고 강하게 결론 내리기 어렵습니다. 여러 날·세션 상태별로 반복하고, 각 상태별 통과 기준을 정하는 편이 낫습니다.
+- “세션 종료 후 다음 시작 때 발견”은 60초 기준과 다른 조건입니다. 살아 있는 세션의 지연 기준과 재시작 후 정본에서 회수되는 기준을 분리하세요. 재전송 중복 0은 세션이 받은 알림 기준인지, 저장소 기록 기준인지도 명시해야 합니다.
 
-## 4. 로컬 세션을 깨우는 가장 단순한 방법
+### 4. 로컬 세션을 깨우는 가장 단순한 방법
 
-로컬 에이전트 PC에서 **Pub/Sub 고수준 클라이언트 라이브러리의 StreamingPull을 실행하는 상주 감시 스크립트**를 하나 두는 방식을 추천합니다. 아웃바운드 연결로 이벤트를 받고, PC가 꺼져 있거나 구독자가 끊긴 동안의 메시지는 재연결 뒤 처리할 수 있습니다. 다만 메시지 재전달 가능성을 전제로 중복 처리를 막아야 합니다. [Pub/Sub pull 및 StreamingPull](https://cloud.google.com/pubsub/docs/pull) · [정확히 한 번 전달의 조건과 한계](https://cloud.google.com/pubsub/docs/exactly-once-delivery)
+Windows PC에서 상시 실행 가능한 감시 프로세스가 이미 있다면 **Pub/Sub의 고수준 클라이언트 라이브러리로 StreamingPull을 유지하고, 이벤트를 로컬 받은함 파일에 기록하는 방식**을 추천합니다. 연결이 끊기면 라이브러리가 재연결하고, 로컬 세션은 시작 시 그 파일을 읽으면 됩니다. 단, 이는 세션 자체를 깨우기보다 로컬 감시 프로세스와 받은함을 깨우는 방식입니다. [Google Pub/Sub 문서](https://cloud.google.com/pubsub/docs/pull#streamingpull)
 
-## 5. 봇 댓글에만 알림이 온 현상
+### 5. 봇 댓글에만 알림이 오는 현상
 
-GitHub 웹훅 자체는 이벤트 발행자에 따라 댓글 이벤트를 자동 제외한다고 볼 근거가 없습니다. 하지만 질문의 현상은 GitHub 웹훅과 **클라우드 세션의 PR 구독 수신**을 구분해야 하며, 후자의 작성자별 필터 동작은 공식 문서로 확인 불가입니다. 표본도 각 1건이므로 제품 동작으로 확정하거나 의존하지 말고, 해당 세션에서 사람 댓글·봇 댓글을 여러 번 교차 시험하세요. [GitHub 댓글 이벤트 문서](https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment)
+- GitHub의 일반 웹훅은 댓글 이벤트에 발신자 정보를 포함하지만, 이번 실측 대상은 GitHub 웹훅 자체가 아니라 **클라우드 세션의 PR 구독 기능**입니다. GitHub 문서만으로 그 구독이 본인 댓글을 필터링한다고 확인할 수 없습니다. [GitHub issue_comment 이벤트](https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment)
+- 따라서 현재 관찰은 **자기 계정 필터링일 가능성은 있지만, 1건씩의 표본만으로 제품 동작이라 확정할 수 없습니다.** 실험으로 확인하기 전에는 설계의 필수 조건으로 의존하지 않는 편이 좋습니다. 제품 변경 위험도 문서에서 확인 불가입니다.
 
-### 확인 근거
-
-Tally의 서명 헤더는 `Tally-Signature`이며, 공식 예시는 요청 본문으로 SHA-256 HMAC을 검증합니다. 사용자 지정 헤더와 재시도 일정도 문서에 있습니다. 따라서 비밀은 외부 브릿지에만 보관하고 서명을 검증한 뒤 전달해야 합니다. [Tally 웹훅 가이드](https://tally.so/help/webhooks)
+참고로 Pub/Sub 전달도 중복 가능성이 있으므로 “무유실”이나 “중복 0”을 서비스만으로 보장한다고 보면 안 됩니다. 정본 기록과 멱등 처리가 필요합니다. [Pub/Sub 정확히 한 번 전달 설명](https://cloud.google.com/pubsub/docs/exactly-once-delivery)
