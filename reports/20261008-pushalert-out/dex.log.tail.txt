@@ -1,0 +1,4 @@
+scripts/ops/ask_dex.sh: line 17: C:/work/_ops/pushalert/dex.md: No such file or directory
+scripts/ops/ask_dex.sh: line 42: C:/work/_ops/pushalert/dex.md: No such file or directory
+답 저장: C:/work/_ops/pushalert/dex.md ( bytes)
+다음: git -C /c/work/_ops/dex/topicwork diff 를 탐이 읽고 검사를 직접 다시 돌린다. 커밋은 바뀐 파일 이름을 하나씩 지정한다(테스트 산출물 섞임 방지, 10/2).
