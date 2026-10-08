@@ -1,0 +1,16 @@
+신PC rc=0
+구PC rc=0
+--- 신PC
+--- 구PC
+HOST 구PC 열린 디버그 포트: [9222, 9223, 9224, 9225, 9226, 9227, 9228, 9229, 9230, 9231]
+PORT 9222 url=https://gemini.google.com/app title=Google Gemini 계정=si***@simplifier.co.kr 입력창=True 로그인화면=False 차단징후=[] 초=7.1
+PORT 9223 url=https://gemini.google.com/app title=Google Gemini 계정=si***@simplifier.co.kr 입력창=True 로그인화면=False 차단징후=[] 초=6.4
+PORT 9224 url=https://gemini.google.com/app title=Google Gemini 계정=my***@gmail.com 입력창=True 로그인화면=False 차단징후=[] 초=7.0
+PORT 9225 url=https://gemini.google.com/app title=Google Gemini 계정=my***@gmail.com 입력창=True 로그인화면=False 차단징후=[] 초=7.3
+PORT 9226 url=https://gemini.google.com/app title=Google Gemini 계정=si***@paywork.io 입력창=True 로그인화면=False 차단징후=[] 초=7.0
+PORT 9227 url=https://gemini.google.com/app title=Google Gemini 계정=si***@simplifier.co.kr 입력창=True 로그인화면=False 차단징후=[] 초=6.3
+PORT 9228 url=https://gemini.google.com/app title=Google Gemini 계정=(없음) 입력창=True 로그인화면=True 차단징후=[] 초=11.4
+PORT 9229 url=https://gemini.google.com/app title=Google Gemini 계정=7h***@gmail.com 입력창=True 로그인화면=False 차단징후=[] 초=9.0
+PORT 9230 url=https://gemini.google.com/app title=Google Gemini 계정=ha***@gmail.com 입력창=True 로그인화면=False 차단징후=[] 초=8.8
+PORT 9231 url=https://gemini.google.com/app title=Google Gemini 계정=ha***@gmail.com 입력창=True 로그인화면=False 차단징후=[] 초=6.9
+RESULT 끝
