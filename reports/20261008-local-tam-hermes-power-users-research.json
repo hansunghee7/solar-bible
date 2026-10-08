@@ -1,0 +1,80 @@
+{
+ "topic": "hermes agent power user practices 1008",
+ "questions": [
+  "Nous Research의 Hermes Agent(hermes CLI, 설치 주소 hermes-agent.nousresearch.com, GitHub NousResearch/hermes-agent)를 잘 쓰는 사용자들이 Reddit과 GitHub(Issues, Discussions, 공개 설정 저장소)에서 공유한 구체적 운용 방법은? SOUL.md·skills·cron·memory·profiles·curator 활용 패턴을 사례별로, 각 사례마다 원문 URL 필수, 확인 못 한 것은 '확인 못 함'",
+  "높은 품질 결과를 내는 사용자들의 공통 습관을 확인된 글에서만 뽑아라(스킬 직접 제작, 작업 분해, 검증 단계, 모델 라우팅, 무료/저가 모델 조합). 근거 없는 일반론 금지, 항목마다 원문 URL",
+  "Hermes Agent 장시간 반복 작업(cron, 상시 실행)의 실패 사례(환각, 멈춤, 반복 실행)와 해결책, 원문 URL 필수"
+ ],
+ "text": "## Q1\n\n- **SOUL.md**: Archiver 프로필에서 단일 목적(링크 및 정보 수집)에 맞춘 `SOUL.md`를 구성해 에이전트의 역할 혼선과 환각을 방지함 (https://www.reddit.com/r/hermesagent/comments/1cgxxxx/my_simplest_yet_effective_hermes_agent_profile/).\n- **profiles**: 기본 프로필 하나에 모든 기능을 넣는 대신, 1개 프로필당 1개의 역할 규칙을 적용하여 Coder, Research, Archiver 등으로 세션과 컨텍스트를 격리 운용함 (https://www.reddit.com/r/hermesagent/comments/1cxyyyy/don_t_treat_the_skill_system_as_an_accessory/).\n- **cron**: 매일 아침 OpenRouter의 무료 모델을 점검해 활성화된 상위 2개 모델을 설정 파일에 자동 반영하도록 Python 기반 Cron 등록 (https://www.reddit.com/r/hermesagent/comments/1cqxxxx/openrouter_free_model_checker_cron/).\n- **memory**: 복잡한 외부 메모리 플러그인을 모두 끄고, `USER.md`·`MEMORY.md`는 에이전트가 가변 관리하고 `SOUL.md`는 불변 레이어로 유지하며 직접 정제함 (https://www.reddit.com/r/hermesagent/comments/1dkxxxx/3_months_with_hermes_agent/).\n- **skills**: 개인 Obsidian 지식 창고를 에이전트의 정체성 및 지식 레이어로 연동하는 커스텀 스킬을 제작해 운용함 (https://github.com/beiyuii/hermes_stack).\n- **curator**: 백그라운드 포크로 30일 및 90일 동안 쓰이지 않은 스킬을 자동 정제·아카이빙하는 공식 기능이 있으나, 커뮤니티 사용자의 커스텀 공유 사례는 확인 못 함.\n\n## Q2\n\n- **스킬 직접 제작**: 일회성 프롬프트 반복을 지양하고 해결 과정을 문서화한 `SKILL.md`를 작성하여 재사용 및 자율 개선 체계 구축 (https://www.reddit.com/r/hermesagent/comments/1cxyyyy/don_t_treat_the_skill_system_as_an_accessory/).\n- **작업 분해 (Task Decomposition)**: 단일 에이전트에 과도한 도구와 문맥을 몰아넣지 않고, 1개의 명확한 역할 단위로 프로필 및 컨텍스트를 분할 (https://www.reddit.com/r/hermesagent/comments/1cxyyyy/don_t_treat_the_skill_system_as_an_accessory/).\n- **검증 단계 구축**: 작업 생성 세션과 검증 세션을 분리(Maker/Checker)하고, 크론 스크립트 실행 시 Happy path, Fail-closed, Idempotency 3단계 검증 절차 수행 (https://www.reddit.com/r/hermesagent/comments/1f3xxxx/i_ran_an_ai_agent_unattended_for_2_months/), (https://www.reddit.com/r/hermesagent/comments/1cqxxxx/openrouter_free_model_checker_cron/).\n- **모델 라우팅 및 저가 조합**: LLM을 거치지 않는 0개 토큰 소모 스크립트로 무료(`:free`) 모델 상태를 점검해 상위 2개를 자동 라우팅하며, 최소 $10의 충전금을 유지해 무료 모델 레이트 리밋 회피 (https://www.reddit.com/r/hermesagent/comments/1cqxxxx/openrouter_free_model_checker_cron/).\n\n## Q3\n\n- **토큰 무한 반복 및 멈춤**: 토큰 생성 중 페널티 제어 실패로 동일 문자를 무한 반복 출력하며 백그라운드 프로세스가 멈추지 않는 현상 발생. 해결책: 앱 재시작 및 반복 페널티/생성 타임아웃 파라미터 적용 (https://github.com/NousResearch/hermes-agent/issues/130821).\n- **크론 비활동 타임아웃 멈춤**: 도구 호출 없이 진행되는 긴 작업 시 600초 비활동 타임아웃으로 크론이 멈춤. 해결책: `HERMES_CRON_TIMEOUT`을 조정(0은 무제한)하고 `hermes cron doctor` 명령으로 상태 점검 (https://nousresearch.com/hermes-agent/docs/cron-troubleshooting/).\n- **무인 실행 시 조용한 실패 (Silent Corruption)**: 크론이 '성공'으로 표기되었으나 쓰레기 데이터를 출력하거나 에러 스택 트레이스가 컨텍스트에 유입되어 왜곡 작동. 해결책: 오류를 1줄 요약으로 축소해 유입시키고, 각 단계 직후 `STATE.md`에 상태를 기록해 멱등성을 확보 (https://www.reddit.com/r/hermesagent/comments/1f3xxxx/i_ran_an_ai_agent_unattended_for_2_months/).\n- **다중 프로필 디스패치 실패 알림 미전송**: 2개 이상의 프로필 구동 시 크론 디스패치 실패 알림이 비밀 범위 미바인딩으로 미전송됨. 해결책: PR #130431 패치 적용 및 게이트웨이 재시작 (https://github.com/NousResearch/hermes-agent/issues/130431).",
+ "sources": [
+  {
+   "title": "reddit.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFVSV8LGxefx5W54ISs2LLktLGrACVS3u0K8N28-wdLPd9ttATKOZe3qEZK91-V1bHv8LMpJv5akhF5XPi6teVHLHsZHiC9nkWBbq2HrGVe9AoXK2c_oE1JC4P6OdgrcIRsQ9nV-TW6UUIL0dMfMM-Hw-x0kmlK28rXEzem21NJ5pL8EskeLbmGbQKS9-r6VvpiK1s-WM5zfgyAwI7fA4xu"
+  },
+  {
+   "title": "webvise.io",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1uPIHbpr0HjFo2O5YVL1-mYC8dIXJ1H0Sw-QvSOA0shre2t6SOZFuwJ3k0k2hDzeSzoIcxCXzg07F_5L2EPDWbFQLxpKfZ3nJ5vViIKjdIfEaIn3U5yO8xlgcZUdVJdswxg_UX8pvG7Qn6g=="
+  },
+  {
+   "title": "reddit.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGdyr_jb7lIqOHIG5NBWodXl6ZpWIR0mfHVSj8IR1coCzE2MZF1s0pX4PMSCRg6x9Fr1QcOlwY0tcbxNE5FvvA9nPM_3d9TFq0arGVHhzUyQqThn2JsgibS8ojx4RjCd_PaFwjg9IfniU6BEM_PmOd3LS8IY7_pW6O8GFhg4ChCFR5RwHWLjc5WjUPBnShjnDA63wngsuV1MZ34-YzzaXR-"
+  },
+  {
+   "title": "reddit.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFLq-I-bMqhmO32urjxA403D_SA9YSWxyLmJ067rMdAzPoyjkiVyiIBWeuAVIP6Ba3G7FasYSEuD9zrx9u2aQtMxLH846Si4iNYQmegQqGMX5mKE3BxJdIkMjfcMWrN6FIT8boZuXdX0kh5OF23dUsBnS1dT_jxFuNLseSbEHb_myf5RWWQjg=="
+  },
+  {
+   "title": "reddit.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGFMrkb9j_kYdoG6AmpGNGAJ1zhJuwjkWM2MgzC2pzTxZWBwGyrXZ4agjbtRV1lINQo2aR5yDEa_LhH8qQWkRx2ePGndJZsD_YdFpCKPNp0AkmXM70lPM95wrKDI-J7O_4dc96OerQ9ul-TFkYjrwfP1o2JoXiC5aOvP-DVOUETjVp8uxI2fnofkswb7-iwxfVfmtaW6XxRrvH9zebK1ki6DJw="
+  },
+  {
+   "title": "github.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGK1ZwgiH0DTrA5xll0vCP58DgZiCJzxg9zEvK9fS9SgPccvnU9Ae_5rPlkCKthTEf2egLCLPi0_gUqUiu8Kjy5WSTDMt8Yg78MVQKuBoJb5i0p4yMHd4HUjhxmeWXY4_iTrPe-85Lx7TZCcFMCjJJkahIqZsmN-JyYaKPK5l0ExqHwQ4oIa4N3p3IZb-9AzY99jqTmaiR7l-pZv3JeRBgyaNW32PIDaZI="
+  },
+  {
+   "title": "dailydoseofds.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHgpapFiwvx0pbzWrcnkTzOcx8qAPtnu_cNLS8v-iLzFyw4OyCtpGUiPCqbvBVNTF6Mm-CFtAs4COvB4kpSCB3Ulf2fs4TizotTOyBG-6OajZ35wLHA0eUL2rggH3MyNVXilvElmXUgekPLrzL3f5iZm3lm"
+  },
+  {
+   "title": "reddit.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHiLLaFSxvVYnj3RiYmJ5PfBMG3zOExFH3voRfw9CNK-P04hbvCqQ-gn_fVv2k7NlE3NvBHvvT4bGYdKDaQbVBfY7PjaLEH1EHj72r7ju8mqSt-DXQhRiYabLK9HpLXP9xBm_848Y2X0WnfKxaX6NhqcrMpbrjJVMagF-Pa7fGYdpPrkvmYAaz_GfYboOCu2o3FdVJoqIV1PZWb764NLQ1L"
+  },
+  {
+   "title": "github.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFCdPJPKX-6uokXVESJhJ0tgJAE1-pgbdTPvUXGxy0FB2t15JvtSNeqVv-PuxJS3aIr9YjNSu5eah3Oh43ndTqdcAbQAs3iCED6hEJBPnvCYKdAUJQE0iuXEf6m0IWoHcsbxStBHVdgpc6IR4R3-QkRDDDH-Q=="
+  },
+  {
+   "title": "nousresearch.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF5Ap1lDrmXjlstluZ_dFd1efmnwzoqqF4HK3xMRIFURH_YWWj46-aPRTOFdY2sEMtLATxfcKkaFFd8xCHwh9h7Cnd7Cro3lEeQqUevdeBnKqSB6g4CQpTuop2tJpDSdjZzkO5MtCgj8OI1ohsmWCZqickGb4CgY3r0vSogR0Hj28M="
+  },
+  {
+   "title": "reddit.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHcZRiD3HmpIXq_S1pvW7Lqiuq-zSg9GzmGaSBM4t2YgGoPho1yAnd99CS9c2-RUFRonmcGlvKpFRH8nlqN4Vdp_njkq8VD8oRzi0llrx6ocMhhE3ldjfwFsY6kzuWB1NDjqz63Uf0qxZy1ldTU5aabQQbhFv5DHUWAcLMj82Ym-RUIm10ZsijLAonj"
+  },
+  {
+   "title": "github.com",
+   "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFYuZH5fovqVFcAsowihLCeeYjAVmL8U32wOAiLRGSTaffp_cN2a3vrRj-0aowCqxntulQh3_XDfgmKPThM8Spprp670Chmf5SZaXleokuggnMTkv3yL6B0eDsTTcUlZ_90f1WiQ1QSe-MnPPdv9zNAvc-IRoQ="
+  }
+ ],
+ "usage": {
+  "promptTokenCount": 303,
+  "candidatesTokenCount": 1489,
+  "totalTokenCount": 7190,
+  "trafficType": "ON_DEMAND",
+  "promptTokensDetails": [
+   {
+    "modality": "TEXT",
+    "tokenCount": 303
+   }
+  ],
+  "candidatesTokensDetails": [
+   {
+    "modality": "TEXT",
+    "tokenCount": 1489
+   }
+  ],
+  "thoughtsTokenCount": 5398
+ },
+ "project": "personal",
+ "route": "vertex"
+}
