@@ -1,0 +1,8 @@
+[
+ {"claim":"헤르메스 크론은 비활동 타임아웃 기본 600초이며 HERMES_CRON_TIMEOUT으로 조정하고 0이면 무제한이다",
+  "url":"https://hermes-agent.nousresearch.com/docs/guides/cron-troubleshooting","expected":"확인됨",
+  "evidence":"The scheduler uses an inactivity-based timeout (default 600s, configurable via HERMES_CRON_TIMEOUT env var, 0 for unlimited)","verified_by":"로컬탐 curl 열람 2026-10-08"},
+ {"claim":"hermes cron doctor 명령으로 크론 상태를 점검한다",
+  "url":"https://hermes-agent.nousresearch.com/docs/guides/cron-troubleshooting","expected":"원문에서 못 찾음",
+  "evidence":"해당 페이지에서 'cron doctor' 문구 0건","verified_by":"로컬탐 curl+grep 2026-10-08"}
+]
