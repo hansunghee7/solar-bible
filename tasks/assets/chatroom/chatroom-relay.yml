@@ -41,6 +41,6 @@ jobs:
             text="PR #$PR $ACTION: $TITLE"
           fi
           if [ -n "${SLACK:-}" ]; then
-            jq -n --arg t "[교신] $text
-$URL" '{text:$t}' | curl -sS -m 20 -X POST -H 'Content-type: application/json' --data @- "$SLACK" > /dev/null
+            msg=$(printf '[교신] %s\n%s' "$text" "$URL")
+            jq -n --arg t "$msg" '{text:$t}' | curl -sS -m 20 -X POST -H 'Content-type: application/json' --data @- "$SLACK" > /dev/null
           fi
