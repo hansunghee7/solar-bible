@@ -1,0 +1,39 @@
+## 진단3 시각 2026-10-08 14:12:30
+## codex 버전
+codex-cli 0.160.0
+## codex 설정의 sandbox·windows 줄
+3:sandbox_mode = "workspace-write"
+6:[windows]
+7:sandbox = "unelevated"
+## 시험 A_windows_path rc=0
+Reading additional input from stdin...
+OpenAI Codex v0.160.0
+--------
+workdir: C:\work\_ops\dex\topicwork
+model: gpt-6-luna
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: none
+reasoning summaries: none
+session id: 01a119ed-66dc-7523-86b3-0ea3cb508d65
+--------
+## 시험 B_posix_path rc=1
+Error: 지정된 경로를 찾을 수 없습니다. (os error 3)
+## 시험 C_cd_only rc=0
+Reading additional input from stdin...
+OpenAI Codex v0.160.0
+--------
+workdir: C:\work\_ops\dex\topicwork
+model: gpt-6-luna
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: none
+reasoning summaries: none
+session id: 01a119ed-7f8f-7e61-a6b3-b23517196047
+--------
+## 답 파일 크기
+-rw-r--r-- 1 PC 197121 17 10월  8 14:12 C:/work/_ops/pushalert/t_A.md
+-rw-r--r-- 1 PC 197121 42 10월  8 14:12 C:/work/_ops/pushalert/t_C.md
+## 한도 관련 문구 검색(시험 출력 전체)
