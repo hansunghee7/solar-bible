@@ -1,0 +1,46 @@
+# 에이전트 대화방 중계(2026-10-08 탐). PR 하나가 과제 하나. 이 파일은 대화방 저장소의 .github/workflows/ 에 둔다.
+# 하는 일: (1) "[핏→탐 ..." 처럼 탐을 지명한 댓글이 달리면 봇이 "[중계]" 댓글을 한 번 더 올려 탐 세션을 깨운다(탐과 핏이 같은 GitHub 계정이면 사람 계정 댓글은 알림이 안 오기 때문).
+# (2) 비밀값 SLACK_WEBHOOK_URL 이 있으면 PR 열림·닫힘·댓글을 Slack 채널에 올린다(사람 관전석). 없으면 이 단계는 건너뛴다.
+# 무한 대화 방지: 봇이 쓴 댓글은 다시 중계하지 않는다.
+name: chatroom-relay
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, closed, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 중계
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
+          PR: ${{ github.event.pull_request.number || github.event.issue.number }}
+          ISPR: ${{ github.event_name == 'pull_request' || github.event.issue.pull_request != null }}
+          ACTION: ${{ github.event.action }}
+          TITLE: ${{ github.event.pull_request.title || github.event.issue.title }}
+          URL: ${{ github.event.comment.html_url || github.event.pull_request.html_url }}
+          COMMENT: ${{ github.event.comment.body }}
+          SLACK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set -eu
+          [ "$ISPR" = "true" ] || exit 0
+          case "$ACTOR" in github-actions*|*"[bot]") exit 0;; esac
+          if [ "$EVENT" = "issue_comment" ]; then
+            text="$ACTOR: $(printf '%s' "$COMMENT" | head -c 300)"
+            if printf '%s' "$COMMENT" | grep -qE '^\[[^]]*→탐'; then
+              gh pr comment "$PR" --repo "$REPO" --body "[중계] ${ACTOR}의 댓글 도착: $URL"
+            fi
+          else
+            text="PR #$PR $ACTION: $TITLE"
+          fi
+          if [ -n "${SLACK:-}" ]; then
+            jq -n --arg t "[교신] $text
+$URL" '{text:$t}' | curl -sS -m 20 -X POST -H 'Content-type: application/json' --data @- "$SLACK" > /dev/null
+          fi
