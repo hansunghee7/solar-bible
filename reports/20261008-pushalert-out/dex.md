@@ -1,3 +1,12 @@
+## 1. 설계안의 결함·위험
+
+- **수신 후 저장 전에 2xx를 반환하면 유실될 수 있습니다.** Tally는 10초 안에 2xx를 받지 못하면 정해진 간격으로 재시도하므로, 서명 검증 후 저장소 push나 큐 적재가 확인된 뒤 응답해야 합니다. [Tally 웹훅 재시도 안내](https://tally.so/help/webhooks)
+- **응답 원문을 PR 댓글에 넣으면 폼 내용이 세션 프롬프트로 유입됩니다.** 민감정보·악성 지시문 노출 위험이 있으니, 댓글에는 제출 ID와 안전한 요약만 두고 원문은 접근을 제한해 저장하는 편이 낫습니다. (위험 분석)
+- **저장소 push는 경합·덮어쓰기·토큰 권한 문제가 있습니다.** 동시 제출 시 파일 경로와 커밋 충돌을 고려하고, GitHub 토큰은 필요한 저장소와 권한만 허용해야 합니다. [GitHub 파일 API](https://docs.github.com/en/rest/repos/contents)
+- **중복 방지는 원자적이어야 합니다.** “확인 후 기록” 사이에 동시 재시도가 끼면 중복 처리될 수 있고, 처리 기록을 너무 빨리 지우면 늦은 재시도도 중복됩니다. Tally가 고정된 이벤트 ID를 재시도마다 유지하는지는 확인하지 못했습니다.
+- **GitHub Actions 토큰으로 만든 일반 push/댓글은 후속 워크플로를 깨우지 않을 수 있습니다.** `GITHUB_[민감어 줄임] 이벤트는 기본적으로 새 워크플로를 유발하지 않으며 `repository_dispatch` 등 예외가 있습니다. [GitHub 문서](https://docs.github.com/en/actions/concepts/security/github_[민감어 줄임]
+
+## 2. 더 단순하거나 싼 대안
 
 - **Tally에서 GitHub 이벤트로 직접 변환하는 기능은 확인하지 못했습니다.** Tally는 사용자 지정 헤더는 지원하지만, 본문을 GitHub API의 `event_type`/`client_payload` 형식으로 재구성하거나 GitHub API 인증을 동적으로 붙이는 기능은 문서에서 확인되지 않습니다. [Tally 웹훅](https://tally.so/help/webhooks) · [GitHub `repository_dispatch`](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)
 - 변환기는 GCP를 이미 쓰고 있다면 **Cloud Run 함수 하나**로 서명 확인, ID 기반 중복 처리, `repository_dispatch` 호출만 하는 구성이 단순합니다. dispatch에는 `Contents: write` 권한 토큰이 필요합니다. [GitHub API 권한 요건](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)
