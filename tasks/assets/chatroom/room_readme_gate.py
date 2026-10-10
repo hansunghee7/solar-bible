@@ -29,7 +29,7 @@ def check(text):
     miss = []
     if not re.search(r"^#{1,3}[^\n]*하실 일", text, re.M):
         miss.append("① 제목에 '하실 일'이 없음")
-    if not re.search(r"^>\s*\S", text, re.M):
+    if not re.search(r"^\s*>\s*\S", text, re.M):
         miss.append("② 에이전트에게 붙여 넣을 문장(인용 블록 '>')이 없음")
     if "중지" not in text:
         miss.append("③ '중지' 안내가 없음")
