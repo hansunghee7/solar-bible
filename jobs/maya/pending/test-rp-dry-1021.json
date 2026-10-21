@@ -1,0 +1,20 @@
+{
+ "id": "test-rp-dry-1021",
+ "run_at": "2026-10-21T13:09:09+09:00",
+ "window_min": 60,
+ "cmd": "post_rocketpunch",
+ "post": false,
+ "args": {},
+ "files": {
+  "text": {
+   "path": "jobs/maya/files/test1021/rp_test.txt",
+   "sha256": "5a12e21348205148fddb40a2bba28ddf352e1c14831801b173e26185f2345497"
+  },
+  "image": {
+   "path": "jobs/maya/files/test1021/rp_test.jpg",
+   "sha256": "49a8364b0805206e895787c9b23b49c170fb5ebf04194324c9f12794cfc25ebd"
+  }
+ },
+ "approved_by": "사장님",
+ "approved_quote": "사장님 2026-10-21: 마야가 작업서를 저장소에 PR로 올리고 구PC 크론이 병합본만 가져와 실행하는 경로를 개선 과제 진행(모의 실행 시험, 게시 안 함)"
+}
