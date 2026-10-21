@@ -1,6 +1,6 @@
 {
- "id": "test-rp-dry-1021",
- "run_at": "2026-10-21T13:09:09+09:00",
+ "id": "test-rp-dry-1021b",
+ "run_at": "2026-10-21T13:11:23+09:00",
  "window_min": 60,
  "cmd": "post_rocketpunch",
  "post": false,
